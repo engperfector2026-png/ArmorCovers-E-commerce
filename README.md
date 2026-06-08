@@ -122,7 +122,7 @@ Create a `.env` file:
 ```env
 PORT=5000
 
-MONGO_URI=your_mongodb_connection_string
+MONGO_URI=mongodb+srv://AmorCover:<db_password>@cluster0.dy36w9a.mongodb.net/?appName=Cluster0
 
 JWT_SECRET=your_jwt_secret
 
@@ -131,27 +131,17 @@ MPESA_CONSUMER_KEY=your_consumer_key
 MPESA_CONSUMER_SECRET=your_consumer_secret
 
 MPESA_PASSKEY=your_passkey
-```
 
-Run backend server:
-
-```bash
-npm start
-```
-
-or
+**Run backend server**:
 
 ```bash
 npm run dev
-```
 
 Server runs on:
 
 ```bash
 http://localhost:5000
-```
 
----
 
 ## Frontend Setup
 
@@ -335,7 +325,5 @@ This project is licensed under the MIT License.
 ## Author
 
 **Elijah Wagah**
-
-ARMORCOVERS Marketplace
-
-Building a secure, scalable, and user-friendly e-commerce ecosystem for buyers and sellers.
+phone number: 0796985894
+email address: engperfector2026@gmail.com

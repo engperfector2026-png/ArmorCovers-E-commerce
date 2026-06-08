@@ -86,6 +86,7 @@ ARMORCOVERS/
 │   ├── config/
 │   ├── server.js
 │   └── package.json
+|   |----uploads
 │
 └── README.md
 ```
@@ -122,12 +123,7 @@ Create a `.env` file:
 ```env
 PORT=5000
 
-MONGO_URI=mongodb+srv://AmorCover:<db_password>@cluster0.dy36w9a.mongodb.net/?appName=Cluster0
-
-JWT_SECRET=your_jwt_secret
-
-MPESA_CONSUMER_KEY=your_consumer_key
-
+MONGO_URI=
 MPESA_CONSUMER_SECRET=your_consumer_secret
 
 MPESA_PASSKEY=your_passkey

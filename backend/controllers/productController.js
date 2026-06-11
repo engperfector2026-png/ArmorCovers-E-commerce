@@ -1,132 +1,124 @@
 const Product = require("../models/Product");
 
-// Create Product
+// ======================================
+// CREATE PRODUCT
+// ======================================
 const createProduct = async (req, res) => {
   try {
-    let imageUrl = "";
+    console.log("=== CREATE PRODUCT REQUEST ===");
+    console.log("Body:", req.body);
+    console.log("File:", req.file ? req.file.filename : "No file");
 
-    if (req.file) {
-      imageUrl = `http://localhost:5000/uploads/${req.file.filename}`;
+    const { name, price, description, category, stock, brand } = req.body;
+
+    // Basic validation
+    if (!name || !price || !description || !category) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, price, description, and category are required",
+      });
     }
 
-    const product = await Product.create({
-      name: req.body.name,
-      description: req.body.description,
-      category: req.body.category,
-      price: Number(req.body.price),
-      stock: Number(req.body.stock),
-      image: imageUrl,
+    const product = new Product({
+      name: name.trim(),
+      price: parseFloat(price),
+      description: description.trim(),
+      category: category,
+      stock: parseInt(stock) || 1,
+      brand: brand ? brand.trim() : "",
+      image: req.file ? `/uploads/${req.file.filename}` : "",
+      // seller: req.user ? req.user.id : null,   // Commented for now
     });
 
-    res.status(201).json(product);
-  } catch (error) {
-    console.error(error);
+    const savedProduct = await product.save();
 
+    console.log("✅ Product created successfully:", savedProduct._id);
+
+    res.status(201).json({
+      success: true,
+      message: "Product created successfully",
+      product: savedProduct,
+    });
+  } catch (error) {
+    console.error("❌ CREATE PRODUCT ERROR:", error);
+    
     res.status(500).json({
-      message: error.message,
+      success: false,
+      message: error.message || "Failed to create product",
     });
   }
 };
 
-// Get All Products
+// ======================================
+// GET ALL PRODUCTS
+// ======================================
 const getProducts = async (req, res) => {
   try {
-    const products = await Product.find();
+    const products = await Product.find()
+      .sort({ createdAt: -1 });
 
     res.status(200).json(products);
   } catch (error) {
     console.error(error);
-
-    res.status(500).json({
-      message: error.message,
-    });
+    res.status(500).json({ message: error.message });
   }
 };
 
-// Get Product By ID
+// ======================================
+// GET SINGLE PRODUCT
+// ======================================
 const getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(
-      req.params.id
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    res.status(200).json(product);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ======================================
+// UPDATE PRODUCT
+// ======================================
+const updateProduct = async (req, res) => {
+  try {
+    const updateData = { ...req.body };
+
+    if (req.file) {
+      updateData.image = `/uploads/${req.file.filename}`;
+    }
+
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true, runValidators: true }
     );
 
     if (!product) {
-      return res.status(404).json({
-        message: "Product not found",
-      });
+      return res.status(404).json({ message: "Product not found" });
     }
 
     res.status(200).json(product);
   } catch (error) {
     console.error(error);
-
-    res.status(500).json({
-      message: error.message,
-    });
+    res.status(500).json({ message: error.message });
   }
 };
 
-// Update Product
-const updateProduct = async (req, res) => {
-  try {
-    const updatedData = {
-      ...req.body,
-    };
-
-    if (req.file) {
-      updatedData.image = `http://localhost:5000/uploads/${req.file.filename}`;
-    }
-
-    const product =
-      await Product.findByIdAndUpdate(
-        req.params.id,
-        updatedData,
-        {
-          new: true,
-          runValidators: true,
-        }
-      );
-
-    if (!product) {
-      return res.status(404).json({
-        message: "Product not found",
-      });
-    }
-
-    res.status(200).json(product);
-  } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-};
-
-// Delete Product
+// ======================================
+// DELETE PRODUCT
+// ======================================
 const deleteProduct = async (req, res) => {
   try {
-    const product =
-      await Product.findByIdAndDelete(
-        req.params.id
-      );
-
+    const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) {
-      return res.status(404).json({
-        message: "Product not found",
-      });
+      return res.status(404).json({ message: "Product not found" });
     }
-
-    res.status(200).json({
-      message:
-        "Product deleted successfully",
-    });
+    res.status(200).json({ message: "Product deleted successfully" });
   } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      message: error.message,
-    });
+    res.status(500).json({ message: error.message });
   }
 };
 

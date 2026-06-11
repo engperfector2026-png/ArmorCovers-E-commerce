@@ -11,17 +11,23 @@ const {
   deleteProduct,
 } = require("../controllers/productController");
 
-// Create Product
+// ==========================
+// CREATE PRODUCT
+// ==========================
 router.post(
   "/",
   upload.single("image"),
   createProduct
 );
 
-// Get All Products
+// ==========================
+// GET ALL PRODUCTS
+// ==========================
 router.get("/", getProducts);
 
-// Get Products By Category
+// ==========================
+// GET PRODUCTS BY CATEGORY
+// ==========================
 router.get("/category/:category", async (req, res) => {
   try {
     const products = await Product.find({
@@ -36,17 +42,42 @@ router.get("/category/:category", async (req, res) => {
   }
 });
 
-// Get Single Product
+// ==========================
+// GET PRODUCTS BY SELLER
+// ==========================
+router.get("/seller/:sellerId", async (req, res) => {
+  try {
+    const products = await Product.find({
+      seller: req.params.sellerId,
+    });
+
+    res.status(200).json(products);
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+});
+
+// ==========================
+// GET SINGLE PRODUCT
+// ==========================
 router.get("/:id", getProductById);
 
-// Update Product
+// ==========================
+// UPDATE PRODUCT
+// ==========================
 router.put(
   "/:id",
   upload.single("image"),
   updateProduct
 );
 
-// Delete Product
+// ==========================
+// DELETE PRODUCT
+// ==========================
 router.delete("/:id", deleteProduct);
 
 module.exports = router;

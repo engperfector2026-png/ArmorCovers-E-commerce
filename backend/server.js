@@ -5,49 +5,52 @@ const path = require("path");
 
 dotenv.config();
 
-const connectDB = require("./config/db");
-
-// Routes
-const authRoutes = require("./routes/authRoutes");
-const productRoutes = require("./routes/productRoutes");
-const uploadRoutes = require("./routes/uploadRoutes");
-const cartRoutes = require("./routes/cartRoutes");
-const orderRoutes = require("./routes/orderRoutes");
-
-// Connect Database
-connectDB();
-
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Serve Uploaded Images
+// Uploaded Images
 app.use(
   "/uploads",
-  express.static(
-    path.join(__dirname, "uploads")
-  )
+  express.static(path.join(__dirname, "uploads"))
 );
 
-// Test Route
+// Database
+const connectDB = require("./config/db");
+connectDB();
+
+// Routes
 app.get("/", (req, res) => {
-  res.send("ARMORCOVERS API Running");
+  res.send("✅ ARMORCOVERS API is Running!");
 });
 
-// API Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/upload", uploadRoutes);
-app.use("/api/cart", cartRoutes);
-app.use("/api/orders", orderRoutes);
+// Auth Routes
+app.use(
+  "/api/auth",
+  require("./routes/authRoutes")
+);
 
-// Start Server
+// Product Routes
+app.use(
+  "/api/products",
+  require("./routes/productRoutes")
+);
+
+// 404 Handler
+app.use((req, res) => {
+  res.status(404).json({
+    message: `Route not found: ${req.originalUrl}`,
+  });
+});
+
+// Server
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(
-    `Server running on port ${PORT}`
+    `🚀 Server running on http://localhost:${PORT}`
   );
 });

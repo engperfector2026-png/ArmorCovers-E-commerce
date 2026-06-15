@@ -1,18 +1,18 @@
 import { Navigate } from 'react-router-dom';
 import React from 'react';
 
-interface SellerRouteProps {
+interface BuyerRouteProps {
   children: React.ReactNode;
 }
 
-const SellerRoute = ({ children }: SellerRouteProps) => {
+const BuyerRoute: React.FC<BuyerRouteProps> = ({ children }) => {
   const role = localStorage.getItem('role');
   
-  if (role !== 'vendor' && role !== 'seller') {
+  if (!role) {
     return <Navigate to="/login" replace />;
   }
   
   return <>{children}</>;
 };
 
-export default SellerRoute;
+export default BuyerRoute;

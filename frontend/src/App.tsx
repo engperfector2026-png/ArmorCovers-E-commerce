@@ -1,9 +1,12 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+// Layout
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import SellerRoute from "./components/SellerRoute";
+import BuyerRoute from "./components/BuyerRoute";
 
+// Pages
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -17,15 +20,9 @@ import AddProduct from "./pages/AddProduct";
 
 import BuyerDashboard from "./pages/BuyerDashboard";
 import Cart from "./pages/Cart";
+import Wishlist from "./pages/Wishlist";     // ← Make sure this line is exact
 import Checkout from "./pages/Checkout";
 import Success from "./pages/Success";
-
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import Terms from "./pages/Terms";
-import Privacy from "./pages/Privacy";
-
-import CategoryPage from "./pages/CategoryPage";
 
 function App() {
   return (
@@ -35,35 +32,46 @@ function App() {
 
         <main className="flex-1">
           <Routes>
-            {/* Public Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/products" element={<Products />} />
             <Route path="/products/:id" element={<ProductDetails />} />
-            <Route path="/category/:category" element={<CategoryPage />} />
 
-            {/* Static Pages */}
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/privacy" element={<Privacy />} />
-
-            {/* Authentication */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* Protected Seller Routes */}
-            <Route path="/seller-dashboard" element={<SellerRoute><SellerDashboard /></SellerRoute>} />
-            <Route path="/my-products" element={<SellerRoute><MyProducts /></SellerRoute>} />
-            <Route path="/my-orders" element={<SellerRoute><MyOrders /></SellerRoute>} />
-            <Route path="/add-product" element={<SellerRoute><AddProduct /></SellerRoute>} />
+            <Route path="/seller-dashboard" element={
+              <SellerRoute><SellerDashboard /></SellerRoute>
+            } />
+            <Route path="/my-products" element={
+              <SellerRoute><MyProducts /></SellerRoute>
+            } />
+            <Route path="/my-orders" element={
+              <SellerRoute><MyOrders /></SellerRoute>
+            } />
+            <Route path="/add-product" element={
+              <SellerRoute><AddProduct /></SellerRoute>
+            } />
 
-            {/* Buyer Dashboard - No SellerRoute */}
-            <Route path="/buyer-dashboard" element={<BuyerDashboard />} />
-
-            {/* Buyer Pages */}
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/buyer-dashboard" element={
+              <BuyerRoute><BuyerDashboard /></BuyerRoute>
+            } />
+            <Route path="/cart" element={
+              <BuyerRoute><Cart /></BuyerRoute>
+            } />
+            <Route path="/wishlist" element={
+              <BuyerRoute><Wishlist /></BuyerRoute>
+            } />
+            <Route path="/checkout" element={
+              <BuyerRoute><Checkout /></BuyerRoute>
+            } />
             <Route path="/success" element={<Success />} />
+
+            <Route path="*" element={
+              <div className="text-center py-20">
+                <h1 className="text-5xl font-bold">404</h1>
+                <p>Page Not Found</p>
+              </div>
+            } />
           </Routes>
         </main>
 

@@ -1,99 +1,104 @@
+import { Link } from "react-router-dom";
+
 function Contact() {
   return (
-    <div className="bg-slate-100 min-h-screen py-10 px-6">
-
+    <div className="bg-slate-100 min-h-screen py-12 px-6">
       <div className="max-w-5xl mx-auto">
 
-        <div className="bg-white rounded-3xl shadow-lg p-8">
-
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Contact Us
-          </h1>
-
-          <p className="text-gray-600 mb-8">
-            We're here to help. If you have questions, feedback,
-            partnership inquiries, or need support, feel free to
-            reach out to the ArmorCovers team.
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold text-gray-900 mb-4">Get in Touch</h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Have questions? Need support? We're here to help you have the best experience on ArmorCovers.
           </p>
+        </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 gap-10">
 
-            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200">
+          {/* Contact Form */}
+          <div className="bg-white rounded-3xl shadow-lg p-10">
+            <h2 className="text-2xl font-semibold mb-8">Send Us a Message</h2>
 
-              <div className="text-4xl mb-4">📧</div>
+            <form className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-gray-700 mb-2 font-medium">First Name</label>
+                  <input type="text" className="w-full p-4 border border-gray-300 rounded-2xl focus:outline-none focus:border-orange-500" placeholder="John" />
+                </div>
+                <div>
+                  <label className="block text-gray-700 mb-2 font-medium">Last Name</label>
+                  <input type="text" className="w-full p-4 border border-gray-300 rounded-2xl focus:outline-none focus:border-orange-500" placeholder="Doe" />
+                </div>
+              </div>
 
-              <h2 className="text-xl font-bold text-gray-900 mb-2">
-                Email Support
-              </h2>
+              <div>
+                <label className="block text-gray-700 mb-2 font-medium">Email Address</label>
+                <input type="email" className="w-full p-4 border border-gray-300 rounded-2xl focus:outline-none focus:border-orange-500" placeholder="your@email.com" />
+              </div>
 
-              <p className="text-gray-600">
-                elijahwagah990@gmail.com
-              </p>
+              <div>
+                <label className="block text-gray-700 mb-2 font-medium">Subject</label>
+                <input type="text" className="w-full p-4 border border-gray-300 rounded-2xl focus:outline-none focus:border-orange-500" placeholder="How can we help you?" />
+              </div>
 
+              <div>
+                <label className="block text-gray-700 mb-2 font-medium">Message</label>
+                <textarea rows={6} className="w-full p-4 border border-gray-300 rounded-2xl focus:outline-none focus:border-orange-500" placeholder="Write your message here..."></textarea>
+              </div>
+
+              <button 
+                type="submit"
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-semibold transition text-lg"
+              >
+                Send Message
+              </button>
+            </form>
+          </div>
+
+          {/* Contact Info */}
+          <div className="space-y-8">
+
+            <div className="bg-white rounded-3xl shadow p-8">
+              <h3 className="text-xl font-semibold mb-6 flex items-center gap-3">
+                📍 Our Location
+              </h3>
+              <p className="text-gray-600">Nairobi, Kenya</p>
             </div>
 
-            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200">
-
-              <div className="text-4xl mb-4">📞</div>
-
-              <h2 className="text-xl font-bold text-gray-900 mb-2">
-                Phone
-              </h2>
-
-              <p className="text-gray-600">
-                +254 796 985 894/ +254708540862
-              </p>
-
+            <div className="bg-white rounded-3xl shadow p-8">
+              <h3 className="text-xl font-semibold mb-6 flex items-center gap-3">
+                📧 Email Us
+              </h3>
+              <p className="text-gray-600 text-lg">elijahwagah990@gmail.com</p>
+              <p className="text-sm text-gray-500 mt-1">We reply within 24 hours</p>
             </div>
 
-            <div className="bg-slate-50 rounded-2xl p-6 border border-slate-200">
+            <div className="bg-white rounded-3xl shadow p-8">
+              <h3 className="text-xl font-semibold mb-6 flex items-center gap-3">
+                📞 Call Us
+              </h3>
+              <p className="text-gray-600 text-lg">+254 796 985 894</p>
+              <p className="text-gray-600 text-lg">+254 708 540 862</p>
+            </div>
 
-              <div className="text-4xl mb-4">📍</div>
-
-              <h2 className="text-xl font-bold text-gray-900 mb-2">
-                Location
-              </h2>
-
-              <p className="text-gray-600">
-                Nairobi, Kenya
-              </p>
-
+            <div className="bg-white rounded-3xl shadow p-8">
+              <h3 className="text-xl font-semibold mb-6">Business Hours</h3>
+              <div className="space-y-2 text-gray-600">
+                <p><strong>Monday - Friday:</strong> 8:00 AM - 6:00 PM</p>
+                <p><strong>Saturday:</strong> 9:00 AM - 4:00 PM</p>
+                <p><strong>Sunday & Holidays:</strong> Closed</p>
+              </div>
             </div>
 
           </div>
+        </div>
 
-          <div className="mt-10 border-t border-slate-200 pt-6">
-
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Business Hours
-            </h2>
-
-            <div className="space-y-2 text-gray-600">
-              <p>Monday - Friday: 8:00 AM - 6:00 PM</p>
-              <p>Saturday: 9:00 AM - 4:00 PM</p>
-              <p>Sunday & Public Holidays: Closed</p>
-            </div>
-
-          </div>
-
-          <div className="mt-8 bg-orange-50 border border-orange-200 rounded-2xl p-6">
-
-            <h3 className="text-lg font-bold text-orange-600 mb-2">
-              Need Immediate Assistance?
-            </h3>
-
-            <p className="text-gray-700">
-              Our support team is committed to responding to all
-              inquiries as quickly as possible to ensure a smooth
-              marketplace experience for buyers and sellers.
-            </p>
-
-          </div>
-
+        {/* Footer Note */}
+        <div className="text-center mt-16 text-gray-500">
+          <p>© {new Date().getFullYear()} ArmorCovers Marketplace. All Rights Reserved.</p>
         </div>
 
       </div>
-
     </div>
   );
 }

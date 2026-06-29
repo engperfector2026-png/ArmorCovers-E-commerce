@@ -10,41 +10,37 @@ const Login = () => {
 
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
 
     try {
+      setLoading(true);
+      setError("");
+
       const res = await axios.post("http://localhost:5000/api/auth/login", {
         email,
         password,
       });
 
-      // Save important data
       localStorage.setItem("token", res.data.token);
-      localStorage.setItem("role", res.data.role);
-      localStorage.setItem("name", res.data.name || "");
+      localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      alert(`✅ Welcome back, ${res.data.name}!`);
+      console.log("🔑 Logged in with role:", res.data.user.role);
 
-      // Redirect based on role
-      const role = res.data.role?.toLowerCase();
+      // Better role check
+      const role = res.data.user.role?.toLowerCase();
 
-      if (role === "vendor" || role === "seller") {
-        navigate("/seller-dashboard");
-      } else if (role === "admin") {
+      if (role === "admin") {
         navigate("/admin-dashboard");
+      } else if (role === "seller" || role === "vendor") {
+        navigate("/seller-dashboard");
       } else {
-        navigate("/"); // Default to Home or Buyer Dashboard
+        navigate("/buyer-dashboard");
       }
 
-    } catch (error: any) {
-      console.error("Login Error:", error);
-      setError(
-        error?.response?.data?.message || 
-        "Invalid email or password. Please try again."
-      );
+    } catch (err: any) {
+      console.error("LOGIN ERROR:", err);
+      setError(err?.response?.data?.message || "Invalid email or password");
     } finally {
       setLoading(false);
     }
@@ -53,24 +49,19 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-6">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-3xl shadow-lg border border-slate-200 p-10">
-
-          <div className="text-center mb-8">
-            <h1 className="text-5xl font-extrabold text-slate-900">
-              ARMOR<span className="text-orange-500">COVERS</span>
-            </h1>
-            <p className="text-slate-600 mt-3">Sign in to your account</p>
-          </div>
+        <div className="bg-white rounded-3xl shadow-xl p-10">
+          <h2 className="text-3xl font-bold text-center mb-2">Welcome Back</h2>
+          <p className="text-gray-600 text-center mb-8">Sign in to your account</p>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-center">
+            <div className="bg-red-50 text-red-600 p-4 rounded-2xl mb-6 text-center">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block mb-2 text-slate-700 font-medium">Email Address</label>
+              <label className="block mb-2 text-slate-700 font-medium">Email</label>
               <input
                 type="email"
                 value={email}
@@ -96,7 +87,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-semibold transition disabled:opacity-70"
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-semibold transition disabled:opacity-50"
             >
               {loading ? "Signing In..." : "Sign In"}
             </button>
@@ -106,11 +97,10 @@ const Login = () => {
             <p className="text-slate-600">
               Don't have an account?{" "}
               <Link to="/register" className="text-orange-500 font-semibold hover:underline">
-                Register here
+                Register
               </Link>
             </p>
           </div>
-
         </div>
       </div>
     </div>

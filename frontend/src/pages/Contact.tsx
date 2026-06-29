@@ -70,7 +70,7 @@ function Contact() {
                 📧 Email Us
               </h3>
               <p className="text-gray-600 text-lg">elijahwagah990@gmail.com</p>
-              <p className="text-sm text-gray-500 mt-1">We reply within 24 hours</p>
+              <p className="text-sm text-gray-500 mt-1">We reply within 1 hour</p>
             </div>
 
             <div className="bg-white rounded-3xl shadow p-8">

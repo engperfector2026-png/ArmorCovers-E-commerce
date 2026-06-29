@@ -1,111 +1,104 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { ShoppingCart, LogOut, Menu, X } from "lucide-react";
+import { ShoppingCart, Bell, User, LogOut, Menu, X } from "lucide-react";
 
 function Navbar() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState("");
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
+  const [user, setUser] = useState<any>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const name = localStorage.getItem("name");
-
-    if (token) {
-      setIsLoggedIn(true);
-      setUserName(name || "User");
-    }
+    const storedUser = JSON.parse(localStorage.getItem("user") || "null");
+    setUser(storedUser);
   }, []);
 
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    setUser(null);
     navigate("/login");
   };
 
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-50 border-b">
-      <div className="max-w-7xl mx-auto px-6 py-5">
+    <nav className="bg-white shadow-md sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex justify-between items-center">
-
-          {/* Logo + Business Name */}
+          
+          {/* Logo */}
           <Link to="/" className="flex items-center gap-3">
             <img 
               src="/business Logo.jpg" 
               alt="ArmorCovers" 
-              className="h-11 w-auto"
+              className="h-11 w-auto" 
             />
-            <div className="hidden sm:block">
-              <span className="text-3xl font-bold tracking-tighter text-gray-900">ARMOR</span>
-              <span className="text-3xl font-bold tracking-tighter text-orange-500">COVERS</span>
+            <div className="font-bold text-2xl">
+              <span className="text-orange-600">ARMOR</span>
+              <span className="text-gray-800">COVERS</span>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-9 text-gray-700 font-medium">
-            <Link to="/" className="hover:text-orange-600 transition">Home</Link>
-            <Link to="/products" className="hover:text-orange-600 transition">Shop</Link>
-            <Link to="/seller-dashboard" className="hover:text-orange-600 transition">Sell</Link>
-            <Link to="/about" className="hover:text-orange-600 transition">About</Link>
+          <div className="hidden md:flex items-center gap-8 text-gray-700 font-medium">
+            <Link to="/" className="hover:text-orange-500">Home</Link>
+            <Link to="/products" className="hover:text-orange-500">Marketplace</Link>
+            <Link to="/about" className="hover:text-orange-500">About</Link>
+            <Link to="/contact" className="hover:text-orange-500">Contact</Link>
           </div>
 
           {/* Right Side */}
           <div className="flex items-center gap-4">
-            {isLoggedIn ? (
-              <>
-                <Link to="/cart" className="p-3 hover:bg-gray-100 rounded-2xl transition">
-                  <ShoppingCart size={24} />
+            <Link to="/cart" className="p-2 hover:text-orange-500">
+              <ShoppingCart size={24} />
+            </Link>
+
+            {user ? (
+              <div className="flex items-center gap-4">
+                <Link 
+                  to={user.role === "seller" ? "/seller-dashboard" : "/buyer-dashboard"} 
+                  className="flex items-center gap-2 hover:text-orange-500"
+                >
+                  <User size={22} />
+                  <span className="hidden md:block">{user.name?.split(" ")[0]}</span>
                 </Link>
 
-                <div className="flex items-center gap-3 pl-4 border-l">
-                  <span className="text-sm font-medium hidden md:block">Hi, {userName}</span>
-                  <button
-                    onClick={handleLogout}
-                    className="p-2 hover:bg-red-50 text-red-600 rounded-2xl transition"
-                  >
-                    <LogOut size={22} />
-                  </button>
-                </div>
-              </>
+                <button onClick={handleLogout} className="text-gray-500 hover:text-red-500">
+                  <LogOut size={22} />
+                </button>
+              </div>
             ) : (
-              <>
-                <Link to="/login" className="hidden md:block px-6 py-3 text-gray-700 hover:text-orange-600 font-medium transition">
+              <div className="flex items-center gap-3">
+                <Link 
+                  to="/login" 
+                  className="border border-orange-500 text-orange-500 px-5 py-2 rounded-xl hover:bg-orange-50"
+                >
                   Login
                 </Link>
                 <Link 
                   to="/register" 
-                  className="bg-orange-500 hover:bg-orange-600 text-white px-7 py-3 rounded-2xl font-semibold transition"
+                  className="bg-orange-500 text-white px-5 py-2 rounded-xl hover:bg-orange-600"
                 >
                   Register
                 </Link>
-              </>
+              </div>
             )}
 
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu Toggle */}
             <button 
-              className="md:hidden p-3 text-gray-700"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="md:hidden p-2"
+              onClick={() => setMenuOpen(!menuOpen)}
             >
-              {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+              {menuOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
           </div>
         </div>
 
         {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden mt-6 py-6 border-t flex flex-col gap-6 text-lg font-medium">
-            <Link to="/" onClick={() => setIsMenuOpen(false)}>Home</Link>
-            <Link to="/products" onClick={() => setIsMenuOpen(false)}>Shop</Link>
-            <Link to="/seller-dashboard" onClick={() => setIsMenuOpen(false)}>Sell</Link>
-            <Link to="/about" onClick={() => setIsMenuOpen(false)}>About</Link>
-            
-            {!isLoggedIn && (
-              <>
-                <Link to="/login" onClick={() => setIsMenuOpen(false)}>Login</Link>
-                <Link to="/register" onClick={() => setIsMenuOpen(false)}>Register</Link>
-              </>
-            )}
+        {menuOpen && (
+          <div className="md:hidden mt-4 pt-4 border-t flex flex-col gap-4 text-lg">
+            <Link to="/" onClick={() => setMenuOpen(false)} className="py-2">Home</Link>
+            <Link to="/products" onClick={() => setMenuOpen(false)} className="py-2">Marketplace</Link>
+            <Link to="/about" onClick={() => setMenuOpen(false)} className="py-2">About</Link>
+            <Link to="/contact" onClick={() => setMenuOpen(false)} className="py-2">Contact</Link>
           </div>
         )}
       </div>

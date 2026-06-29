@@ -9,75 +9,47 @@ const {
   getProductById,
   updateProduct,
   deleteProduct,
+  addReview,           // ← Added
 } = require("../controllers/productController");
 
-// ==========================
-// CREATE PRODUCT
-// ==========================
-router.post(
-  "/",
-  upload.single("image"),
-  createProduct
-);
+// ===================== PRODUCT ROUTES =====================
 
-// ==========================
-// GET ALL PRODUCTS
-// ==========================
+// Create Product
+router.post("/", upload.single("image"), createProduct);
+
+// Get All Products
 router.get("/", getProducts);
 
-// ==========================
-// GET PRODUCTS BY CATEGORY
-// ==========================
+// Get Products by Category
 router.get("/category/:category", async (req, res) => {
   try {
-    const products = await Product.find({
-      category: req.params.category,
-    });
-
+    const products = await Product.find({ category: req.params.category });
     res.status(200).json(products);
   } catch (error) {
-    res.status(500).json({
-      message: error.message,
-    });
+    res.status(500).json({ message: error.message });
   }
 });
 
-// ==========================
-// GET PRODUCTS BY SELLER
-// ==========================
+// Get Products by Seller
 router.get("/seller/:sellerId", async (req, res) => {
   try {
-    const products = await Product.find({
-      seller: req.params.sellerId,
-    });
-
+    const products = await Product.find({ seller: req.params.sellerId });
     res.status(200).json(products);
   } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      message: error.message,
-    });
+    res.status(500).json({ message: error.message });
   }
 });
 
-// ==========================
-// GET SINGLE PRODUCT
-// ==========================
+// Get Single Product
 router.get("/:id", getProductById);
 
-// ==========================
-// UPDATE PRODUCT
-// ==========================
-router.put(
-  "/:id",
-  upload.single("image"),
-  updateProduct
-);
+// Add Review to Product
+router.post("/:id/reviews", addReview);        // ← NEW ROUTE
 
-// ==========================
-// DELETE PRODUCT
-// ==========================
+// Update Product
+router.put("/:id", upload.single("image"), updateProduct);
+
+// Delete Product
 router.delete("/:id", deleteProduct);
 
 module.exports = router;

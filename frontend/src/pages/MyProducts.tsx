@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import { Package, Edit2, Trash2 } from 'lucide-react';
 import API from '../api/axios';
 
@@ -16,6 +17,7 @@ function MyProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchProducts();
@@ -26,9 +28,7 @@ function MyProducts() {
       setLoading(true);
       setError("");
 
-      // Fetch all products for now (you can filter by seller later)
       const res = await API.get("/products");
-
       setProducts(res.data);
     } catch (err: any) {
       console.error("Failed to load products:", err);
@@ -44,23 +44,12 @@ function MyProducts() {
     try {
       await API.delete(`/products/${id}`);
       alert("✅ Product deleted successfully");
-      fetchProducts(); // Refresh the list
+      fetchProducts();
     } catch (error) {
       console.error(error);
       alert("❌ Failed to delete product");
     }
   };
-
-  if (loading) {
-    return (
-      <div className="bg-slate-100 min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <Package size={60} className="mx-auto text-orange-500 mb-4 animate-pulse" />
-          <p className="text-xl text-gray-600">Loading your products...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="bg-slate-100 min-h-screen py-10 px-6">
@@ -73,7 +62,7 @@ function MyProducts() {
           </div>
 
           <button
-            onClick={() => window.location.href = '/add-product'}
+            onClick={() => navigate('/add-product')}
             className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-2xl flex items-center gap-3 font-semibold transition"
           >
             <Package size={24} />
@@ -87,13 +76,18 @@ function MyProducts() {
           </div>
         )}
 
-        {products.length === 0 ? (
+        {loading ? (
+          <div className="bg-white rounded-3xl shadow-sm p-20 text-center">
+            <Package size={60} className="mx-auto text-orange-500 mb-4 animate-pulse" />
+            <p className="text-xl text-gray-600">Loading your products...</p>
+          </div>
+        ) : products.length === 0 ? (
           <div className="bg-white rounded-3xl shadow-sm p-16 text-center">
             <div className="text-7xl mb-6">📦</div>
             <h2 className="text-3xl font-bold text-gray-900 mb-3">No Products Yet</h2>
             <p className="text-gray-600 mb-8">Start selling by adding your first product</p>
             <button
-              onClick={() => window.location.href = '/add-product'}
+              onClick={() => navigate('/add-product')}
               className="bg-orange-500 text-white px-8 py-4 rounded-2xl font-semibold text-lg"
             >
               Add Your First Product
@@ -106,12 +100,16 @@ function MyProducts() {
                 key={product._id}
                 className="bg-white rounded-3xl shadow-sm overflow-hidden hover:shadow-md transition"
               >
-                <div className="h-56 bg-slate-100 relative">
+                {/* Image Section */}
+                <div className="h-56 bg-slate-100 relative overflow-hidden">
                   {product.image ? (
                     <img
-                      src={product.image}
+                      src={`http://localhost:5000${product.image}`}
                       alt={product.name}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = "https://via.placeholder.com/400x300?text=No+Image";
+                      }}
                     />
                   ) : (
                     <div className="h-full flex items-center justify-center text-6xl text-gray-300">
@@ -140,7 +138,10 @@ function MyProducts() {
                   </p>
 
                   <div className="flex gap-3 mt-6">
-                    <button className="flex-1 flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 py-3 rounded-2xl font-medium transition">
+                    <button 
+                      onClick={() => navigate(`/edit-product/${product._id}`)}
+                      className="flex-1 flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 py-3 rounded-2xl font-medium transition"
+                    >
                       <Edit2 size={18} />
                       Edit
                     </button>

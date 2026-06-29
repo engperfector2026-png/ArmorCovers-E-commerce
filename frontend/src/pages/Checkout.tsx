@@ -2,200 +2,174 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 
 const kenyaCounties: { [key: string]: string[] } = {
-  "Nairobi": ["Westlands", "Dagoretti South", "Langata", "Starehe", "Kasarani", "Embakasi Central", "Embakasi East", "Embakasi North", "Embakasi South", "Embakasi West", "Ruaraka", "Roysambu"],
-  "Mombasa": ["Mvita", "Likoni", "Changamwe", "Jomvu", "Nyali", "Kisauni"],
-  "Kiambu": ["Thika", "Ruiru", "Kikuyu", "Limuru", "Gatundu South", "Gatundu North", "Lari", "Kabete", "Kiambu", "Githunguri"],
-  "Nakuru": ["Nakuru Town East", "Nakuru Town West", "Naivasha", "Gilgil", "Molo", "Njoro", "Subukia", "Rongai", "Bahati"],
-  "Kisumu": ["Kisumu Central", "Kisumu West", "Kisumu East", "Seme", "Nyando", "Muhoroni", "Nyakach"],
-  "Uasin Gishu": ["Soy", "Turbo", "Ainabkoi", "Moiben", "Kesses", "Kapseret"],
-  "Meru": ["Central Imenti", "North Imenti", "South Imenti", "Buuri", "Tigania East", "Tigania West", "Igembe North", "Igembe South"],
-  "Nyeri": ["Nyeri Central", "Nyeri South", "Mathira East", "Mathira West", "Mukurweini", "Kieni", "Tetu"],
-  "Kakamega": ["Lugari", "Likuyani", "Malava", "Lurambi", "Shinyalu", "Ikolomani", "Khwisero"],
-  "Kilifi": ["Kilifi North", "Kilifi South", "Malindi", "Magarini", "Ganze", "Rabai"],
-  "Machakos": ["Machakos Town", "Masinga", "Yatta", "Kangundo", "Matungulu", "Kathiani", "Mwala"],
-  "Kitui": ["Kitui Central", "Kitui West", "Kitui East", "Mwingi Central", "Mwingi North", "Mwingi West"],
-  "Isiolo": ["Isiolo", "Garbatulla", "Merti"],
-  "Garissa": ["Garissa Township", "Lagdera", "Dadaab", "Fafi", "Hulugho"],
-  "Wajir": ["Wajir East", "Wajir West", "Wajir North", "Wajir South", "Eldas", "Tarbaj"],
-  "Mandera": ["Mandera East", "Mandera West", "Mandera North", "Banissa", "Lafey"],
-  "Marsabit": ["Marsabit Central", "Laisamis", "Moyale", "North Horr", "Chalbi"],
-  "Turkana": ["Turkana Central", "Turkana North", "Turkana South", "Turkana West", "Loima"],
-  "West Pokot": ["West Pokot", "Pokot South", "Pokot Central", "Kacheliba"],
-  "Samburu": ["Samburu Central", "Samburu North", "Samburu East"],
-  "Trans Nzoia": ["Trans Nzoia East", "Trans Nzoia West", "Endebess", "Kiminini"],
-  "Elgeyo Marakwet": ["Marakwet East", "Marakwet West", "Keiyo North", "Keiyo South"],
-  "Nandi": ["Nandi Hills", "Aldai", "Emgwen", "Mosop", "Tinderet"],
-  "Baringo": ["Baringo Central", "Baringo North", "Baringo South", "Mogotio", "Tiaty"],
-  "Laikipia": ["Laikipia East", "Laikipia West", "Laikipia North"],
-  "Narok": ["Narok North", "Narok South", "Narok East", "Narok West", "Kilgoris"],
-  "Kajiado": ["Kajiado North", "Kajiado Central", "Kajiado East", "Kajiado West", "Kajiado South"],
-  "Kericho": ["Kericho", "Bureti", "Belgut", "Sigowet-Soin"],
-  "Bomet": ["Bomet Central", "Bomet East", "Konoin", "Sotik"],
-  "Homa Bay": ["Homa Bay Town", "Ndhiwa", "Mbita", "Suba", "Karachuonyo"],
-  "Migori": ["Migori", "Rongo", "Awendo", "Suna East", "Suna West"],
-  "Siaya": ["Siaya", "Gem", "Bondo", "Rarieda", "Ugenya", "Ugunja"],
-  "Busia": ["Busia", "Samia", "Nambale", "Butula", "Matayos"],
-  "Vihiga": ["Vihiga", "Sabatia", "Luanda", "Emuhaya", "Hamisi"],
-  "Taita Taveta": ["Mwatate", "Voi", "Wundanyi", "Taveta"],
-  "Kwale": ["Matuga", "Kinango", "Msambweni", "Lunga Lunga"],
-  "Lamu": ["Lamu East", "Lamu West"],
-  "Tana River": ["Garsen", "Galole", "Bura"],
-  "Embu": ["Manyatta", "Runyenjes", "Mbeere North", "Mbeere South"],
-  "Tharaka Nithi": ["Tharaka", "Maara", "Chuka/Igambang'ombe"],
-  "Murang'a": ["Murang'a South", "Murang'a North", "Kandara", "Kangema", "Kigumo", "Gatanga"],
-  "Kirinyaga": ["Mwea", "Gichugu", "Ndia", "Kirinyaga Central"],
+  "Nairobi": ["Westlands", "Kasarani", "Embakasi", "Dagoretti South", "Langata", "Roysambu", "Ruaraka"],
+  "Mombasa": ["Mvita", "Changamwe", "Jomvu", "Nyali", "Likoni", "Kisauni"],
+  "Kisumu": ["Kisumu Central", "Kisumu East", "Kisumu West", "Seme", "Nyando"],
+  "Eldoret": ["Soy", "Turbo", "Moiben", "Kesses"],
+  "Nakuru": ["Nakuru Town", "Gilgil", "Molo", "Njoro", "Subukia"],
+  "Kiambu": ["Thika", "Ruiru", "Juja", "Kiambu Town", "Githunguri"],
+  "Kakamega": ["Lurambi", "Shinyalu", "Ikolomani", "Mumias"],
+  "Bungoma": ["Bungoma Central", "Bungoma East", "Bungoma West", "Kimilili"],
+  "Machakos": ["Machakos Town", "Masinga", "Kangundo", "Matungulu"],
+  "Meru": ["Meru Central", "Imenti North", "Imenti South"],
+  "Nyeri": ["Nyeri Central", "Mathira", "Mukurweini"],
+  "Kilifi": ["Kilifi North", "Kilifi South", "Malindi"],
+  "Uasin Gishu": ["Turbo", "Soy", "Ainabkoi"],
+  "Trans Nzoia": ["Endebess", "Kiminini", "Saboti"],
+  "Garissa": ["Garissa Township", "Dadaab"],
+  "Wajir": ["Wajir East", "Wajir West"],
+  "Mandera": ["Mandera East", "Mandera West"],
+  "Marsabit": ["Marsabit Central", "Moyale"],
+  "Isiolo": ["Isiolo", "Garbatulla"],
+  "Kitui": ["Kitui Central", "Mwingi"],
+  "Embu": ["Embu", "Mbeere"],
+  "Tharaka Nithi": ["Tharaka", "Maara"],
+  "Bomet": ["Bomet Central", "Konoin"],
+  "Kericho": ["Kericho", "Bureti"],
+  "Nandi": ["Nandi Hills", "Emgwen"],
+  "Laikipia": ["Laikipia East", "Laikipia West"],
+  "Narok": ["Narok North", "Narok South"],
+  "Kajiado": ["Kajiado North", "Kajiado Central", "Kajiado East"],
+  "Homa Bay": ["Homa Bay Town", "Ndhiwa"],
+  "Migori": ["Migori", "Rongo"],
+  "Siaya": ["Siaya", "Gem"],
+  "Vihiga": ["Vihiga", "Sabatia"],
+  "Busia": ["Busia", "Butula"],
+  "Taita Taveta": ["Voi", "Taveta"],
+  "Lamu": ["Lamu West", "Lamu East"],
+  "Turkana": ["Turkana Central", "Turkana South"],
+  "West Pokot": ["Kapenguria", "Pokot South"],
+  "Samburu": ["Samburu Central", "Samburu East"],
+  "Baringo": ["Baringo Central", "Baringo North"],
+  "Elgeyo Marakwet": ["Marakwet East", "Marakwet West"],
+  "Kirinyaga": ["Kirinyaga Central", "Mwea"],
+  "Murang'a": ["Murang'a South", "Murang'a North"],
+  "Nyandarua": ["Nyandarua Central", "Kinangop"],
+  "Tana River": ["Garsen", "Hola"],
+  "Kwale": ["Matuga", "Kinango"],
 };
 
-const Checkout = () => {
-  const navigate = useNavigate();
+function Checkout() {
   const [cart, setCart] = useState<any[]>([]);
+  const [total, setTotal] = useState(0);
   const [formData, setFormData] = useState({
     fullName: "",
     phone: "",
     county: "",
     subCounty: "",
-    town: "",
     address: "",
   });
-
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
-
-  const grandTotal = cart.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0);
+  const [agreed, setAgreed] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const savedCart = JSON.parse(localStorage.getItem("cart") || "[]");
     setCart(savedCart);
+    
+    const calculatedTotal = savedCart.reduce((sum: number, item: any) => {
+      return sum + (item.price * (item.quantity || 1));
+    }, 0);
+    
+    setTotal(calculatedTotal);
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+      // Reset sub-county when county changes
+      ...(name === "county" && { subCounty: "" })
+    }));
   };
 
-  const handleCountyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setFormData({ 
-      ...formData, 
-      county: e.target.value,
-      subCounty: "" 
-    });
-  };
-
-  const handleCheckout = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.fullName || !formData.phone || !formData.county || !formData.subCounty || !formData.address) {
+    if (!agreed) {
+      alert("Please agree to the Terms & Conditions");
+      return;
+    }
+
+    if (!formData.fullName || !formData.phone || !formData.county) {
       alert("Please fill in all required fields");
       return;
     }
 
-    if (!agreedToTerms) {
-      alert("You must agree to the Terms and Conditions to proceed with your order.");
-      return;
-    }
-
-    alert(`🎉 Order placed successfully!\n\nTotal Amount: KSh ${grandTotal.toLocaleString()}\nDelivery Location: ${formData.subCounty}, ${formData.county}`);
-
+    localStorage.setItem("lastOrderTotal", total.toString());
     localStorage.removeItem("cart");
+
+    alert("🎉 Order placed successfully!");
     navigate("/success");
   };
 
-  if (cart.length === 0) {
-    return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold">Your cart is empty</h2>
-          <button onClick={() => navigate("/products")} className="mt-6 bg-orange-500 text-white px-8 py-4 rounded-2xl">
-            Browse Products
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-slate-100 py-12 px-6">
+    <div className="bg-slate-50 min-h-screen py-12 px-6">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold mb-8">Checkout</h1>
 
         <div className="grid md:grid-cols-5 gap-8">
-          {/* Delivery Form */}
           <div className="md:col-span-3">
-            <div className="bg-white rounded-3xl p-8 shadow">
+            <div className="bg-white rounded-3xl shadow p-8">
               <h2 className="text-2xl font-semibold mb-6">Delivery Information</h2>
 
-              <form onSubmit={handleCheckout} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label className="block text-gray-700 mb-2">Full Name *</label>
-                  <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} className="w-full p-4 border rounded-2xl" required />
+                  <input type="text" name="fullName" value={formData.fullName} onChange={handleInputChange} className="w-full px-5 py-4 rounded-2xl border" required />
                 </div>
 
                 <div>
                   <label className="block text-gray-700 mb-2">Phone Number *</label>
-                  <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} className="w-full p-4 border rounded-2xl" placeholder="+254 7XX XXX XXX" required />
+                  <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} className="w-full px-5 py-4 rounded-2xl border" placeholder="2547XXXXXXXX" required />
                 </div>
 
-                <div>
-                  <label className="block text-gray-700 mb-2">County *</label>
-                  <select name="county" value={formData.county} onChange={handleCountyChange} className="w-full p-4 border rounded-2xl" required>
-                    <option value="">Select County</option>
-                    {Object.keys(kenyaCounties).map(county => (
-                      <option key={county} value={county}>{county}</option>
-                    ))}
-                  </select>
-                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-gray-700 mb-2">County *</label>
+                    <select name="county" value={formData.county} onChange={handleInputChange} className="w-full px-5 py-4 rounded-2xl border" required>
+                      <option value="">Select County</option>
+                      {Object.keys(kenyaCounties).map(county => (
+                        <option key={county} value={county}>{county}</option>
+                      ))}
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="block text-gray-700 mb-2">Sub-County *</label>
-                  <select name="subCounty" value={formData.subCounty} onChange={handleInputChange} className="w-full p-4 border rounded-2xl" required disabled={!formData.county}>
-                    <option value="">Select Sub-County</option>
-                    {formData.county && kenyaCounties[formData.county].map(sub => (
-                      <option key={sub} value={sub}>{sub}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-gray-700 mb-2">Town / City</label>
-                  <input type="text" name="town" value={formData.town} onChange={handleInputChange} className="w-full p-4 border rounded-2xl" />
+                  <div>
+                    <label className="block text-gray-700 mb-2">Sub-County</label>
+                    <select name="subCounty" value={formData.subCounty} onChange={handleInputChange} className="w-full px-5 py-4 rounded-2xl border">
+                      <option value="">Select Sub-County</option>
+                      {formData.county && kenyaCounties[formData.county]?.map(sub => (
+                        <option key={sub} value={sub}>{sub}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div>
                   <label className="block text-gray-700 mb-2">Delivery Address *</label>
-                  <textarea name="address" value={formData.address} onChange={handleInputChange} rows={4} className="w-full p-4 border rounded-2xl" placeholder="House number, street name, estate..." required />
+                  <textarea name="address" value={formData.address} onChange={handleInputChange} className="w-full px-5 py-4 rounded-2xl border h-24" placeholder="House number, street, landmark..." required />
                 </div>
 
-                {/* Terms & Conditions Checkbox with Links */}
-                <div className="flex items-start gap-3 pt-4">
-                  <input
-                    type="checkbox"
-                    checked={agreedToTerms}
-                    onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="mt-1 w-5 h-5 accent-orange-500 cursor-pointer"
-                    required
-                  />
-                  <label className="text-sm text-gray-600 leading-relaxed">
-                    I have read and agree to the{" "}
-                    <Link to="/terms" className="text-orange-500 underline hover:text-orange-600">Terms and Conditions</Link>{" "}
-                    and{" "}
-                    <Link to="/privacy" className="text-orange-500 underline hover:text-orange-600">Privacy Policy</Link>
-                  </label>
+                <div className="flex items-center gap-3">
+                  <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="w-5 h-5 accent-orange-500" />
+                  <span className="text-sm text-gray-600">
+                    I agree to the <Link to="/terms" className="text-orange-500 underline">Terms & Conditions</Link>
+                  </span>
                 </div>
 
-                <button
-                  type="submit"
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white py-5 rounded-2xl font-semibold text-lg mt-6"
-                >
-                  Place Order - KSh {grandTotal.toLocaleString()}
+                <button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white py-5 rounded-2xl font-semibold text-xl transition">
+                  Place Order - KSh {total.toLocaleString()}
                 </button>
               </form>
             </div>
           </div>
 
-          {/* Order Summary */}
           <div className="md:col-span-2">
-            <div className="bg-white rounded-3xl p-8 shadow sticky top-8">
+            <div className="bg-white rounded-3xl shadow p-8 sticky top-6">
               <h2 className="text-2xl font-semibold mb-6">Order Summary</h2>
-              {cart.map((item, index) => (
-                <div key={index} className="flex justify-between py-4 border-b last:border-none">
+              {cart.map((item: any, index: number) => (
+                <div key={index} className="flex justify-between py-3 border-b last:border-none">
                   <div>
                     <p className="font-medium">{item.name}</p>
                     <p className="text-sm text-gray-500">Qty: {item.quantity || 1}</p>
@@ -203,10 +177,9 @@ const Checkout = () => {
                   <p className="font-semibold">KSh {(item.price * (item.quantity || 1)).toLocaleString()}</p>
                 </div>
               ))}
-
-              <div className="pt-6 flex justify-between text-2xl font-bold">
+              <div className="mt-8 pt-6 border-t flex justify-between text-2xl font-bold">
                 <span>Total</span>
-                <span className="text-orange-600">KSh {grandTotal.toLocaleString()}</span>
+                <span className="text-orange-600">KSh {total.toLocaleString()}</span>
               </div>
             </div>
           </div>
@@ -214,6 +187,6 @@ const Checkout = () => {
       </div>
     </div>
   );
-};
+}
 
 export default Checkout;

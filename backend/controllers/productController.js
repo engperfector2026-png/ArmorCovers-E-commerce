@@ -11,7 +11,6 @@ const createProduct = async (req, res) => {
 
     const { name, price, description, category, stock, brand } = req.body;
 
-    // Validation
     if (!name || !price || !description || !category) {
       return res.status(400).json({
         success: false,
@@ -27,7 +26,7 @@ const createProduct = async (req, res) => {
       stock: parseInt(stock) || 1,
       brand: brand ? brand.trim() : "",
       image: req.file ? `/uploads/${req.file.filename}` : "",
-      seller: req.user ? req.user.id : null,   // Link to logged-in seller
+      seller: req.user ? req.user.id : null,
     });
 
     const savedProduct = await product.save();
@@ -55,7 +54,7 @@ const getProducts = async (req, res) => {
   try {
     const products = await Product.find()
       .sort({ createdAt: -1 })
-      .populate('seller', 'name storeName'); // Optional: show seller info
+      .populate('seller', 'name storeName');
 
     res.status(200).json(products);
   } catch (error) {
@@ -87,6 +86,53 @@ const getProductById = async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: error.message 
+    });
+  }
+};
+
+// ======================================
+// ADD REVIEW
+// ======================================
+const addReview = async (req, res) => {
+  try {
+    const { rating, comment, name } = req.body;
+    const productId = req.params.id;
+
+    if (!rating || !comment) {
+      return res.status(400).json({
+        success: false,
+        message: "Rating and comment are required"
+      });
+    }
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found"
+      });
+    }
+
+    const review = {
+      name: name || "Anonymous Buyer",
+      rating: Number(rating),
+      comment: comment.trim(),
+      date: new Date()
+    };
+
+    product.reviews.push(review);
+    await product.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Review added successfully",
+      review
+    });
+  } catch (error) {
+    console.error("Review Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to add review"
     });
   }
 };
@@ -161,4 +207,5 @@ module.exports = {
   getProductById,
   updateProduct,
   deleteProduct,
+  addReview,          // ← Added
 };

@@ -1,17 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Users, Package, DollarSign, AlertTriangle, Shield, TrendingUp } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
+import { Users, Package, DollarSign, AlertTriangle, Shield, Settings } from "lucide-react";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-
-  const [stats] = useState({
-    totalUsers: 1243,
-    totalSellers: 89,
-    totalOrders: 4567,
-    totalRevenue: 12456700,
-    pendingOrders: 67,
-  });
 
   return (
     <div className="bg-slate-100 min-h-screen pb-12">
@@ -32,25 +23,25 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           <div className="bg-white rounded-3xl p-8 shadow">
             <Users className="text-blue-500 mb-4" size={36} />
-            <h3 className="text-5xl font-bold">{stats.totalUsers}</h3>
+            <h3 className="text-5xl font-bold">1,243</h3>
             <p className="text-gray-600 mt-2">Total Users</p>
           </div>
 
           <div className="bg-white rounded-3xl p-8 shadow">
             <Package className="text-orange-500 mb-4" size={36} />
-            <h3 className="text-5xl font-bold">{stats.totalSellers}</h3>
+            <h3 className="text-5xl font-bold">89</h3>
             <p className="text-gray-600 mt-2">Active Sellers</p>
           </div>
 
           <div className="bg-white rounded-3xl p-8 shadow">
             <DollarSign className="text-green-500 mb-4" size={36} />
-            <h3 className="text-5xl font-bold">KSh {(stats.totalRevenue / 1000000).toFixed(1)}M</h3>
+            <h3 className="text-5xl font-bold">KSh 12.45M</h3>
             <p className="text-gray-600 mt-2">Total Revenue</p>
           </div>
 
           <div className="bg-white rounded-3xl p-8 shadow">
             <AlertTriangle className="text-red-500 mb-4" size={36} />
-            <h3 className="text-5xl font-bold text-red-500">{stats.pendingOrders}</h3>
+            <h3 className="text-5xl font-bold text-red-500">67</h3>
             <p className="text-gray-600 mt-2">Pending Orders</p>
           </div>
         </div>
@@ -66,7 +57,7 @@ const AdminDashboard = () => {
               >
                 <Users className="text-blue-500 mb-4" size={32} />
                 <h3 className="font-semibold text-lg">Manage Users</h3>
-                <p className="text-sm text-gray-600 mt-2">View, suspend, or delete users</p>
+                <p className="text-sm text-gray-600 mt-2">View, suspend, delete users</p>
               </button>
 
               <button 
@@ -78,14 +69,20 @@ const AdminDashboard = () => {
                 <p className="text-sm text-gray-600 mt-2">Review and process orders</p>
               </button>
 
-              <button className="bg-green-50 hover:bg-green-100 p-8 rounded-3xl text-left transition border border-transparent hover:border-green-200">
+              <button 
+                onClick={() => navigate("/admin/payments")}
+                className="bg-green-50 hover:bg-green-100 p-8 rounded-3xl text-left transition border border-transparent hover:border-green-200"
+              >
                 <DollarSign className="text-green-500 mb-4" size={32} />
                 <h3 className="font-semibold text-lg">Payment Reports</h3>
                 <p className="text-sm text-gray-600 mt-2">View all transactions</p>
               </button>
 
-              <button className="bg-purple-50 hover:bg-purple-100 p-8 rounded-3xl text-left transition border border-transparent hover:border-purple-200">
-                <Shield className="text-purple-500 mb-4" size={32} />
+              <button 
+                onClick={() => navigate("/admin/settings")}
+                className="bg-purple-50 hover:bg-purple-100 p-8 rounded-3xl text-left transition border border-transparent hover:border-purple-200"
+              >
+                <Settings className="text-purple-500 mb-4" size={32} />
                 <h3 className="font-semibold text-lg">Platform Settings</h3>
                 <p className="text-sm text-gray-600 mt-2">System configuration</p>
               </button>

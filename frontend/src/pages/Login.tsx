@@ -25,10 +25,10 @@ const Login = () => {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
-      console.log("🔑 Logged in with role:", res.data.user.role);
+      console.log("🔑 Login Success - Full Response:", res.data);
+      console.log("🔑 User Role Received:", res.data.user.role);
 
-      // Better role check
-      const role = res.data.user.role?.toLowerCase();
+      const role = (res.data.user.role || "").toLowerCase().trim();
 
       if (role === "admin") {
         navigate("/admin-dashboard");
@@ -39,7 +39,7 @@ const Login = () => {
       }
 
     } catch (err: any) {
-      console.error("LOGIN ERROR:", err);
+      console.error("LOGIN ERROR:", err.response?.data || err);
       setError(err?.response?.data?.message || "Invalid email or password");
     } finally {
       setLoading(false);

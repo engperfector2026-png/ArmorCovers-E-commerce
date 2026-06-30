@@ -12,13 +12,17 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
-    methods: ["GET", "POST"]
+    origin: ["http://localhost:3000", "http://localhost:5173", "http://localhost:5174"],
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:3000", "http://localhost:5173", "http://localhost:5174"],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -27,28 +31,26 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 const connectDB = require("./config/db");
 
 // Routes
-app.get("/", (req, res) => res.send("✅ ARMORCOVERS API Running with Chat & Notifications!"));
+app.get("/", (req, res) => res.send("✅ ARMORCOVERS API Running!"));
 
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
-app.use("/api/admin", require("./routes/adminRoutes"));   // ← Added Admin Routes
+app.use("/api/admin", require("./routes/adminRoutes"));
+app.use("/api/orders", require("./routes/orderRoutes"));
 
-// ===================== SOCKET.IO (Chat + Notifications) =====================
+// Socket.io
 io.on("connection", (socket) => {
   console.log("🟢 User connected:", socket.id);
 
-  // Join Room (for Chat)
   socket.on("joinRoom", (roomId) => {
     socket.join(roomId);
     console.log(`User joined room: ${roomId}`);
   });
 
-  // Send Chat Message
   socket.on("sendMessage", (data) => {
     io.to(data.roomId).emit("receiveMessage", data);
   });
 
-  // Send Notification
   socket.on("sendNotification", (data) => {
     const receiverRoom = data.receiverRoom || `user-${data.receiverId}`;
     io.to(receiverRoom).emit("newNotification", {
@@ -58,7 +60,6 @@ io.on("connection", (socket) => {
       message: data.message,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     });
-    console.log(`Notification sent to ${receiverRoom}`);
   });
 
   socket.on("disconnect", () => {
@@ -66,7 +67,6 @@ io.on("connection", (socket) => {
   });
 });
 
-// Start Server
 const startServer = async () => {
   try {
     await connectDB();
@@ -75,9 +75,7 @@ const startServer = async () => {
     const PORT = process.env.PORT || 5000;
     server.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
-      console.log(`📡 Socket.io + Notifications Active`);
     });
-
   } catch (error) {
     console.error("❌ Server Startup Failed:", error.message);
     process.exit(1);

@@ -39,6 +39,8 @@ import Chat from "./pages/Chat";
 import AdminDashboard from "./pages/AdminDashboard";
 import ManageUsers from "./pages/ManageUsers";
 import ManageOrders from "./pages/ManageOrders";
+import PaymentReports from "./pages/PaymentReports";
+import PlatformSettings from "./pages/PlatformSettings";   // ← Added
 
 function App() {
   return (
@@ -84,6 +86,8 @@ function App() {
             <Route path="/admin-dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path="/admin/users" element={<AdminRoute><ManageUsers /></AdminRoute>} />
             <Route path="/admin/orders" element={<AdminRoute><ManageOrders /></AdminRoute>} />
+            <Route path="/admin/payments" element={<AdminRoute><PaymentReports /></AdminRoute>} />
+            <Route path="/admin/settings" element={<AdminRoute><PlatformSettings /></AdminRoute>} />
 
             {/* 404 */}
             <Route path="*" element={

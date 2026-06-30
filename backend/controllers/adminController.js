@@ -1,5 +1,6 @@
 const User = require("../models/User");
-const Order = require("../models/Order");   // Make sure this model exists
+const Order = require("../models/Order");
+const Settings = require("../models/Settings");
 
 // Get all users
 const getAllUsers = async (req, res) => {
@@ -66,10 +67,73 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
+// Get all payments
+const getAllPayments = async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .populate("buyer", "name email")
+      .populate("product", "name")
+      .sort({ createdAt: -1 });
+
+    const payments = orders.map(order => ({
+      id: `PAY-${order._id.toString().slice(-6)}`,
+      date: new Date(order.createdAt).toISOString().split('T')[0],
+      buyer: order.buyer?.name || "Unknown",
+      amount: order.amount,
+      method: "M-Pesa",
+      status: order.status,
+      orderId: order.orderNumber
+    }));
+
+    res.json(payments);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get platform settings
+const getSettings = async (req, res) => {
+  try {
+    let settings = await Settings.findOne();
+    if (!settings) {
+      settings = new Settings({
+        siteName: "ArmorCovers",
+        contactEmail: "support@armorcovers.co.ke",
+        phoneNumber: "+254 708 540 862",
+        maintenanceMode: false,
+        allowNewRegistrations: true,
+        maxProductsPerSeller: 50,
+        commissionRate: 8,
+      });
+      await settings.save();
+    }
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Update platform settings
+const updateSettings = async (req, res) => {
+  try {
+    const settings = await Settings.findOneAndUpdate(
+      {},
+      { ...req.body, updatedAt: Date.now() },
+      { new: true, upsert: true }
+    );
+    res.json({ message: "Settings updated", settings });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = {
   getAllUsers,
   toggleUserStatus,
   deleteUser,
   getAllOrders,
   updateOrderStatus,
+  getAllPayments,
+  getSettings,
+  updateSettings,
 };

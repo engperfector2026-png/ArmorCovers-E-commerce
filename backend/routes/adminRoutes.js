@@ -11,4 +11,11 @@ router.delete("/users/:id", adminController.deleteUser);
 router.get("/orders", adminController.getAllOrders);
 router.put("/orders/:id/status", adminController.updateOrderStatus);
 
+// Payments
+router.get("/payments", adminController.getAllPayments);
+
 module.exports = router;
+
+//Settings
+router.get("/settings", adminController.getSettings);
+router.put("/settings", adminController.updateSettings);

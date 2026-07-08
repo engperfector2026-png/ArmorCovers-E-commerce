@@ -5,11 +5,10 @@ interface SellerRouteProps {
 }
 
 const SellerRoute = ({ children }: SellerRouteProps) => {
-  const role = localStorage.getItem("role")?.toLowerCase();
   const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  // If not logged in or not a seller/vendor/admin → redirect to login
-  if (!token || !role || (role !== "seller" && role !== "vendor" && role !== "admin")) {
+  if (!token || (user.role !== "seller" && user.role !== "vendor")) {
     return <Navigate to="/login" replace />;
   }
 

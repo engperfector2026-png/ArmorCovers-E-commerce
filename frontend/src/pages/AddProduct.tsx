@@ -1,29 +1,75 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { ArrowLeft, Upload, X, Save } from 'lucide-react';
+import { ArrowLeft, Upload, X } from "lucide-react";
 
 const AddProduct = () => {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewImage, setPreviewImage] = useState<string>("");
+  const [previewImage, setPreviewImage] = useState("");
 
   const [product, setProduct] = useState({
     name: "",
     description: "",
     category: "",
     price: "",
+    wholesalePrice: "",
     stock: "1",
+    minimumOrder: "1",
+    type: "retail",
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setProduct(prev => ({ ...prev, [name]: value }));
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    try {
+      setLoading(true);
+
+      const formData = new FormData();
+
+      formData.append("name", product.name);
+      formData.append("description", product.description);
+      formData.append("category", product.category);
+      formData.append("price", product.price);
+      formData.append("wholesalePrice", product.wholesalePrice);
+      formData.append("stock", product.stock);
+      formData.append("minimumOrder", product.minimumOrder);
+      formData.append("type", product.type);
+
+      if (selectedFile) {
+        formData.append("image", selectedFile);
+      }
+
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+
+      if (user.id) {
+        formData.append("seller", user.id);
+      }
+
+      await axios.post(
+        "http://localhost:5000/api/products",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      alert("✅ Product Added Successfully");
+
+      navigate("/seller-dashboard");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to add product");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
@@ -31,192 +77,105 @@ const AddProduct = () => {
     }
   };
 
-  const removeImage = () => {
-    setSelectedFile(null);
-    setPreviewImage("");
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    if (!product.name || !product.description || !product.category || !product.price) {
-      alert("Please fill in all required fields");
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      const formData = new FormData();
-      formData.append("name", product.name);
-      formData.append("description", product.description);
-      formData.append("category", product.category);
-      formData.append("price", product.price);
-      formData.append("stock", product.stock);
-
-      if (selectedFile) {
-        formData.append("image", selectedFile);
-      }
-
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      if (user.id) formData.append("seller", user.id);
-
-      await axios.post("http://localhost:5000/api/products", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      alert("✅ Product added successfully!");
-      navigate("/my-products");
-
-    } catch (error: any) {
-      console.error(error);
-      alert(error?.response?.data?.message || "Failed to add product. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-slate-100 py-10 px-4">
-      <div className="max-w-5xl mx-auto">
-        
-        <button
-          onClick={() => navigate("/seller-dashboard")}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8 font-medium transition"
-        >
-          <ArrowLeft size={20} />
-          Back to Dashboard
-        </button>
+    <div className="min-h-screen bg-slate-50 py-12 px-6">
+      <div className="max-w-3xl mx-auto">
+        <div className="flex items-center gap-4 mb-8">
+          <button onClick={() => navigate("/seller-dashboard")} className="flex items-center gap-2 text-gray-600 hover:text-gray-900">
+            <ArrowLeft size={20} /> Back
+          </button>
+          <h1 className="text-4xl font-bold">Add New Product</h1>
+        </div>
 
-        <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
-          <div className="bg-orange-500 px-8 py-6">
-            <h1 className="text-3xl font-bold text-white">Add New Product</h1>
-            <p className="text-orange-100 mt-1">Fill in the details to list your product</p>
-          </div>
+        <div className="bg-white rounded-3xl shadow p-10">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div>
+              <label className="block text-gray-700 mb-2">Product Name</label>
+              <input type="text" value={product.name} onChange={(e) => setProduct({...product, name: e.target.value})} className="w-full px-5 py-4 rounded-2xl border focus:border-orange-500" required />
+            </div>
 
-          <form onSubmit={handleSubmit} className="p-8 space-y-8">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="md:col-span-2">
-                <label className="block text-gray-700 font-semibold mb-2">Product Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={product.name}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-xl p-4 focus:outline-none focus:border-orange-500"
-                  placeholder="e.g. Premium Toyota Prado Seat Covers"
-                  required
-                />
-              </div>
+            <div>
+              <label className="block text-gray-700 mb-2">Description</label>
+              <textarea value={product.description} onChange={(e) => setProduct({...product, description: e.target.value})} className="w-full px-5 py-4 rounded-2xl border h-32 focus:border-orange-500" required />
+            </div>
 
-              <div className="md:col-span-2">
-                <label className="block text-gray-700 font-semibold mb-2">Description *</label>
-                <textarea
-                  name="description"
-                  rows={5}
-                  value={product.description}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-xl p-4 focus:outline-none focus:border-orange-500"
-                  placeholder="Detailed description of your product..."
-                  required
-                />
-              </div>
-
+            <div className="grid grid-cols-2 gap-6">
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">Category *</label>
-                <select
-                  name="category"
-                  value={product.category}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-xl p-4 focus:outline-none focus:border-orange-500"
-                  required
-                >
+                <label className="block text-gray-700 mb-2">Category</label>
+                <select value={product.category} onChange={(e) => setProduct({...product, category: e.target.value})} className="w-full px-5 py-4 rounded-2xl border focus:border-orange-500" required>
                   <option value="">Select Category</option>
-                  <option value="Vehicles">Vehicles & Accessories</option>
-                  <option value="Fashion">Fashion & Apparel</option>
-                  <option value="Home">Home & Living</option>
+                  <option value="Vehicles">Vehicles</option>
+                  <option value="Fashion">Fashion</option>
                   <option value="Electronics">Electronics</option>
+                  <option value="Home">Home</option>
                   <option value="Agriculture">Agriculture</option>
-                  <option value="Beauty">Beauty & Health</option>
+                  <option value="Beauty">Beauty</option>
+                  <option value="Sports">Sports</option>
+                  <option value="Health">Health</option>
+                  <option value="Stationary">Stationary</option>
+                  <option value="Education">Education</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-gray-700 font-semibold mb-2">Price (KES) *</label>
-                <input
-                  type="number"
-                  name="price"
-                  value={product.price}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-xl p-4 focus:outline-none focus:border-orange-500"
-                  placeholder="2500"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-semibold mb-2">Stock Quantity</label>
-                <input
-                  type="number"
-                  name="stock"
-                  value={product.stock}
-                  onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded-xl p-4 focus:outline-none focus:border-orange-500"
-                  min="1"
-                />
+                <label className="block text-gray-700 mb-2">Product Type</label>
+                <select value={product.type} onChange={(e) => setProduct({...product, type: e.target.value})} className="w-full px-5 py-4 rounded-2xl border focus:border-orange-500" required>
+                  <option value="retail">Retail Only</option>
+                  <option value="wholesale">Wholesale Only</option>
+                  <option value="both">Both Retail & Wholesale</option>
+                  <option value="warehouse">Warehouse (Bulk)</option>
+                </select>
               </div>
             </div>
 
-            {/* Image Upload */}
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="block text-gray-700 mb-2">Retail Price (KSh)</label>
+                <input type="number" value={product.price} onChange={(e) => setProduct({...product, price: e.target.value})} className="w-full px-5 py-4 rounded-2xl border focus:border-orange-500" required />
+              </div>
+              <div>
+                <label className="block text-gray-700 mb-2">Wholesale Price (KSh)</label>
+                <input type="number" value={product.wholesalePrice} onChange={(e) => setProduct({...product, wholesalePrice: e.target.value})} className="w-full px-5 py-4 rounded-2xl border focus:border-orange-500" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="block text-gray-700 mb-2">Stock</label>
+                <input type="number" value={product.stock} onChange={(e) => setProduct({...product, stock: e.target.value})} className="w-full px-5 py-4 rounded-2xl border focus:border-orange-500" required />
+              </div>
+              <div>
+                <label className="block text-gray-700 mb-2">Minimum Order</label>
+                <input type="number" value={product.minimumOrder} onChange={(e) => setProduct({...product, minimumOrder: e.target.value})} className="w-full px-5 py-4 rounded-2xl border focus:border-orange-500" required />
+              </div>
+            </div>
+
             <div>
-              <label className="block text-gray-700 font-semibold mb-3">Product Image</label>
-              <div className="border-2 border-dashed border-orange-300 rounded-2xl bg-orange-50 p-10 text-center">
-                <Upload size={48} className="mx-auto text-orange-500 mb-4" />
-                <p className="text-gray-600">Click to upload image</p>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="mt-4 cursor-pointer"
-                />
+              <label className="block text-gray-700 mb-2">Product Image</label>
+              <div className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center">
+                <input type="file" onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setSelectedFile(file);
+                    setPreviewImage(URL.createObjectURL(file));
+                  }
+                }} className="hidden" id="image" />
+                <label htmlFor="image" className="cursor-pointer flex flex-col items-center">
+                  <Upload size={40} className="text-gray-400 mb-4" />
+                  <p className="text-gray-600">Click to upload image</p>
+                </label>
               </div>
+
+              {previewImage && (
+                <div className="mt-6">
+                  <img src={previewImage} alt="Preview" className="w-full h-64 object-cover rounded-2xl" />
+                </div>
+              )}
             </div>
 
-            {previewImage && (
-              <div>
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="font-semibold text-gray-700">Image Preview</h3>
-                  <button
-                    type="button"
-                    onClick={removeImage}
-                    className="flex items-center gap-2 text-red-600 hover:text-red-700"
-                  >
-                    <X size={18} /> Remove
-                  </button>
-                </div>
-                <img
-                  src={previewImage}
-                  alt="Preview"
-                  className="w-full max-h-80 object-cover rounded-2xl border"
-                />
-              </div>
-            )}
-
-            <div className="flex gap-4 pt-6">
-              <button
-                type="button"
-                onClick={() => navigate("/seller-dashboard")}
-                className="flex-1 border border-gray-300 py-4 rounded-2xl font-medium hover:bg-gray-50 transition"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white py-4 rounded-2xl font-semibold flex items-center justify-center gap-2 transition"
-              >
-                <Save size={20} />
+            <div className="flex gap-4 mt-10">
+              <button type="button" onClick={() => navigate("/seller-dashboard")} className="flex-1 border border-gray-300 py-4 rounded-2xl">Cancel</button>
+              <button type="submit" disabled={loading} className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-semibold">
                 {loading ? "Saving Product..." : "Add Product"}
               </button>
             </div>

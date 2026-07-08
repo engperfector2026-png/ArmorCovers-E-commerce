@@ -1,21 +1,26 @@
 const express = require("express");
 const router = express.Router();
-const adminController = require("../controllers/adminController");
+const User = require("../models/User");
+const Order = require("../models/Order");
+const Product = require("../models/Product");
 
-// Users
-router.get("/users", adminController.getAllUsers);
-router.put("/users/:id/status", adminController.toggleUserStatus);
-router.delete("/users/:id", adminController.deleteUser);
+// Get Admin Dashboard Stats
+router.get("/dashboard", async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const activeSellers = await User.countDocuments({ role: { $in: ["seller", "vendor"] } });
+    const totalRevenue = await Order.aggregate([{ $group: { _id: null, total: { $sum: "$amount" } } }]);
+    const pendingOrders = await Order.countDocuments({ status: "Pending" });
 
-// Orders
-router.get("/orders", adminController.getAllOrders);
-router.put("/orders/:id/status", adminController.updateOrderStatus);
-
-// Payments
-router.get("/payments", adminController.getAllPayments);
+    res.json({
+      totalUsers,
+      activeSellers,
+      totalRevenue: totalRevenue[0]?.total || 0,
+      pendingOrders,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
 module.exports = router;
-
-//Settings
-router.get("/settings", adminController.getSettings);
-router.put("/settings", adminController.updateSettings);

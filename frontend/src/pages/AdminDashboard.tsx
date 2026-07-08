@@ -1,110 +1,99 @@
-import { useNavigate } from "react-router-dom";
-import { Users, Package, DollarSign, AlertTriangle, Shield, Settings } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Users, Package, DollarSign, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import API from '../api/axios';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeSellers: 0,
+    totalRevenue: 0,
+    pendingOrders: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const res = await API.get('/admin/dashboard');
+      setStats(res.data);
+    } catch (error) {
+      console.error("Failed to load dashboard data", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="bg-slate-100 min-h-screen pb-12">
       <div className="max-w-7xl mx-auto px-6 py-10">
-        
-        <div className="flex justify-between items-center mb-10">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-gray-600 mt-1">Platform Overview & Management</p>
-          </div>
-          <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-2xl shadow">
-            <Shield className="text-green-500" size={28} />
-            <span className="font-medium">Platform Secure</span>
-          </div>
-        </div>
+        <h1 className="text-4xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+        <p className="text-gray-600 mb-10">Platform Overview & Management</p>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <div className="bg-white rounded-3xl p-8 shadow">
-            <Users className="text-blue-500 mb-4" size={36} />
-            <h3 className="text-5xl font-bold">1,243</h3>
-            <p className="text-gray-600 mt-2">Total Users</p>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+          <div className="bg-white p-8 rounded-3xl shadow-sm">
+            <div className="text-sm text-gray-500">Total Users</div>
+            <div className="text-4xl font-bold text-gray-900 mt-2">{stats.totalUsers}</div>
           </div>
-
-          <div className="bg-white rounded-3xl p-8 shadow">
-            <Package className="text-orange-500 mb-4" size={36} />
-            <h3 className="text-5xl font-bold">89</h3>
-            <p className="text-gray-600 mt-2">Active Sellers</p>
+          <div className="bg-white p-8 rounded-3xl shadow-sm">
+            <div className="text-sm text-gray-500">Active Sellers</div>
+            <div className="text-4xl font-bold text-gray-900 mt-2">{stats.activeSellers}</div>
           </div>
-
-          <div className="bg-white rounded-3xl p-8 shadow">
-            <DollarSign className="text-green-500 mb-4" size={36} />
-            <h3 className="text-5xl font-bold">KSh 12.45M</h3>
-            <p className="text-gray-600 mt-2">Total Revenue</p>
+          <div className="bg-white p-8 rounded-3xl shadow-sm">
+            <div className="text-sm text-gray-500">Total Revenue</div>
+            <div className="text-4xl font-bold text-gray-900 mt-2">KSh {stats.totalRevenue.toLocaleString()}</div>
           </div>
-
-          <div className="bg-white rounded-3xl p-8 shadow">
-            <AlertTriangle className="text-red-500 mb-4" size={36} />
-            <h3 className="text-5xl font-bold text-red-500">67</h3>
-            <p className="text-gray-600 mt-2">Pending Orders</p>
+          <div className="bg-white p-8 rounded-3xl shadow-sm">
+            <div className="text-sm text-gray-500">Pending Orders</div>
+            <div className="text-4xl font-bold text-orange-600 mt-2">{stats.pendingOrders}</div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Quick Actions */}
-          <div className="bg-white rounded-3xl p-8 shadow">
-            <h2 className="text-2xl font-semibold mb-6">Quick Actions</h2>
-            <div className="grid grid-cols-2 gap-4">
-              <button 
-                onClick={() => navigate("/admin/users")}
-                className="bg-blue-50 hover:bg-blue-100 p-8 rounded-3xl text-left transition border border-transparent hover:border-blue-200"
-              >
-                <Users className="text-blue-500 mb-4" size={32} />
-                <h3 className="font-semibold text-lg">Manage Users</h3>
-                <p className="text-sm text-gray-600 mt-2">View, suspend, delete users</p>
-              </button>
-
-              <button 
-                onClick={() => navigate("/admin/orders")}
-                className="bg-orange-50 hover:bg-orange-100 p-8 rounded-3xl text-left transition border border-transparent hover:border-orange-200"
-              >
-                <Package className="text-orange-500 mb-4" size={32} />
-                <h3 className="font-semibold text-lg">Manage Orders</h3>
-                <p className="text-sm text-gray-600 mt-2">Review and process orders</p>
-              </button>
-
-              <button 
-                onClick={() => navigate("/admin/payments")}
-                className="bg-green-50 hover:bg-green-100 p-8 rounded-3xl text-left transition border border-transparent hover:border-green-200"
-              >
-                <DollarSign className="text-green-500 mb-4" size={32} />
-                <h3 className="font-semibold text-lg">Payment Reports</h3>
-                <p className="text-sm text-gray-600 mt-2">View all transactions</p>
-              </button>
-
-              <button 
-                onClick={() => navigate("/admin/settings")}
-                className="bg-purple-50 hover:bg-purple-100 p-8 rounded-3xl text-left transition border border-transparent hover:border-purple-200"
-              >
-                <Settings className="text-purple-500 mb-4" size={32} />
-                <h3 className="font-semibold text-lg">Platform Settings</h3>
-                <p className="text-sm text-gray-600 mt-2">System configuration</p>
-              </button>
+        {/* Quick Actions - Clickable */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div onClick={() => navigate("/admin/users")} className="bg-white p-8 rounded-3xl shadow-sm hover:shadow-md transition cursor-pointer flex gap-5 items-start">
+            <div className="p-4 bg-blue-100 rounded-2xl">
+              <Users size={32} className="text-blue-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-xl">Manage Users</h3>
+              <p className="text-gray-600 text-sm mt-1">View, suspend, delete users</p>
             </div>
           </div>
 
-          {/* Recent Activity */}
-          <div className="bg-white rounded-3xl p-8 shadow">
-            <h2 className="text-2xl font-semibold mb-6">Recent Activity</h2>
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-2xl">
-                <p className="font-medium">New seller registered</p>
-                <p className="text-sm text-gray-500">John Doe • 2 minutes ago</p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-2xl">
-                <p className="font-medium">Order #ORD-7845 flagged</p>
-                <p className="text-sm text-gray-500">Suspicious activity • 15 minutes ago</p>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-2xl">
-                <p className="font-medium">Payment confirmed</p>
-                <p className="text-sm text-gray-500">Mary Jane • 1 hour ago</p>
-              </div>
+          <div onClick={() => navigate("/admin/orders")} className="bg-white p-8 rounded-3xl shadow-sm hover:shadow-md transition cursor-pointer flex gap-5 items-start">
+            <div className="p-4 bg-amber-100 rounded-2xl">
+              <Package size={32} className="text-amber-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-xl">Manage Orders</h3>
+              <p className="text-gray-600 text-sm mt-1">Review and process orders</p>
+            </div>
+          </div>
+
+          <div onClick={() => navigate("/admin/payments")} className="bg-white p-8 rounded-3xl shadow-sm hover:shadow-md transition cursor-pointer flex gap-5 items-start">
+            <div className="p-4 bg-emerald-100 rounded-2xl">
+              <DollarSign size={32} className="text-emerald-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-xl">Payment Reports</h3>
+              <p className="text-gray-600 text-sm mt-1">View all transactions</p>
+            </div>
+          </div>
+
+          <div onClick={() => navigate("/admin/settings")} className="bg-white p-8 rounded-3xl shadow-sm hover:shadow-md transition cursor-pointer flex gap-5 items-start">
+            <div className="p-4 bg-purple-100 rounded-2xl">
+              <Settings size={32} className="text-purple-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-xl">Platform Settings</h3>
+              <p className="text-gray-600 text-sm mt-1">System configuration</p>
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import axios from "axios";
 
 const kenyaCounties: { [key: string]: string[] } = {
   "Nairobi": ["Westlands", "Kasarani", "Embakasi", "Dagoretti South", "Langata", "Roysambu", "Ruaraka"],
@@ -59,7 +60,10 @@ function Checkout() {
     subCounty: "",
     address: "",
   });
+  const [paymentMethod, setPaymentMethod] = useState<"checkout" | "delivery">("checkout");
+  const [mpesaPhone, setMpesaPhone] = useState("");
   const [agreed, setAgreed] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -78,12 +82,41 @@ function Checkout() {
     setFormData(prev => ({
       ...prev,
       [name]: value,
-      // Reset sub-county when county changes
       ...(name === "county" && { subCounty: "" })
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleMpesaPayment = async () => {
+    if (!mpesaPhone) {
+      alert("Please enter your M-Pesa phone number");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await axios.post("http://localhost:5000/api/mpesa/stkpush", {
+        phone: mpesaPhone,
+        amount: total,
+        orderId: "ORD-" + Date.now(),
+      });
+
+      if (response.data.success) {
+        alert("✅ M-Pesa request sent! Check your phone for STK Push.");
+        localStorage.removeItem("cart");
+        navigate("/success");
+      } else {
+        alert("Payment request failed. Try again.");
+      }
+    } catch (error) {
+      alert("M-Pesa payment failed. Check console.");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!agreed) {
@@ -96,11 +129,15 @@ function Checkout() {
       return;
     }
 
-    localStorage.setItem("lastOrderTotal", total.toString());
-    localStorage.removeItem("cart");
-
-    alert("🎉 Order placed successfully!");
-    navigate("/success");
+    if (paymentMethod === "checkout") {
+      await handleMpesaPayment();
+    } else {
+      // M-Pesa on Delivery
+      localStorage.setItem("lastOrderTotal", total.toString());
+      localStorage.removeItem("cart");
+      alert("🎉 Order placed successfully! M-Pesa payment on delivery.");
+      navigate("/success");
+    }
   };
 
   return (
@@ -151,6 +188,33 @@ function Checkout() {
                   <textarea name="address" value={formData.address} onChange={handleInputChange} className="w-full px-5 py-4 rounded-2xl border h-24" placeholder="House number, street, landmark..." required />
                 </div>
 
+                {/* Payment Method */}
+                <div>
+                  <label className="block text-gray-700 mb-3">Payment Method</label>
+                  <div className="flex gap-4">
+                    <button 
+                      type="button"
+                      onClick={() => setPaymentMethod("checkout")}
+                      className={`flex-1 py-4 rounded-2xl border ${paymentMethod === "checkout" ? "border-orange-500 bg-orange-50" : "border-gray-300"}`}
+                    >
+                      M-Pesa During Checkout
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setPaymentMethod("delivery")}
+                      className={`flex-1 py-4 rounded-2xl border ${paymentMethod === "delivery" ? "border-orange-500 bg-orange-50" : "border-gray-300"}`}
+                    >
+                      M-Pesa on Delivery
+                    </button>
+                  </div>
+                </div>
+
+                {/* M-Pesa Phone */}
+                <div>
+                  <label className="block text-gray-700 mb-2">M-Pesa Phone Number *</label>
+                  <input type="tel" value={mpesaPhone} onChange={(e) => setMpesaPhone(e.target.value)} className="w-full px-5 py-4 rounded-2xl border" placeholder="2547XXXXXXXX" required />
+                </div>
+
                 <div className="flex items-center gap-3">
                   <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="w-5 h-5 accent-orange-500" />
                   <span className="text-sm text-gray-600">
@@ -158,8 +222,8 @@ function Checkout() {
                   </span>
                 </div>
 
-                <button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white py-5 rounded-2xl font-semibold text-xl transition">
-                  Place Order - KSh {total.toLocaleString()}
+                <button type="submit" disabled={loading} className="w-full bg-green-600 hover:bg-green-700 text-white py-5 rounded-2xl font-semibold text-xl transition disabled:opacity-50">
+                  {loading ? "Processing..." : paymentMethod === "checkout" ? "Pay Now with M-Pesa" : "Place Order - M-Pesa on Delivery"}
                 </button>
               </form>
             </div>

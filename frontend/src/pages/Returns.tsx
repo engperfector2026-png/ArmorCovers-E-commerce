@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { RotateCcw, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import axios from 'axios';
 
 interface ReturnRequest {
   id: string;
@@ -11,24 +12,45 @@ interface ReturnRequest {
 }
 
 function Returns() {
-  const [returns, setReturns] = useState<ReturnRequest[]>([
-    {
-      id: "RET-001",
-      orderId: "ORD-7842",
-      productName: "Leather Seat Cover - Prado",
-      reason: "Item arrived damaged",
-      status: "Processing",
-      date: "2026-06-22"
-    },
-    {
-      id: "RET-002",
-      orderId: "ORD-7839",
-      productName: "Custom Steering Wheel Cover",
-      reason: "Wrong size delivered",
-      status: "Approved",
-      date: "2026-06-20"
+  const [returns, setReturns] = useState<ReturnRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchReturns();
+  }, []);
+
+  const fetchReturns = async () => {
+    try {
+      setLoading(true);
+      // Replace with real API when ready
+      const response = await axios.get("http://localhost:5000/api/returns");
+      setReturns(response.data);
+    } catch (error) {
+      console.error("Error fetching returns:", error);
+      // Mock data for now
+      const mockReturns: ReturnRequest[] = [
+        {
+          id: "RET-001",
+          orderId: "ORD-7842",
+          productName: "Leather Seat Cover - Prado",
+          reason: "Item arrived damaged",
+          status: "Processing",
+          date: "2026-06-22"
+        },
+        {
+          id: "RET-002",
+          orderId: "ORD-7839",
+          productName: "Custom Steering Wheel Cover",
+          reason: "Wrong size delivered",
+          status: "Approved",
+          date: "2026-06-20"
+        }
+      ];
+      setReturns(mockReturns);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
 
   const getStatusColor = (status: string) => {
     switch(status) {
@@ -52,7 +74,9 @@ function Returns() {
           </div>
         </div>
 
-        {returns.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-20">Loading returns...</div>
+        ) : returns.length === 0 ? (
           <div className="bg-white rounded-3xl p-16 text-center">
             <RotateCcw size={80} className="mx-auto text-gray-300 mb-6" />
             <h2 className="text-2xl font-semibold mb-3">No Return Requests</h2>

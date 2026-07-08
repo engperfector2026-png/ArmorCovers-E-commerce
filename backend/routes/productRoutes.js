@@ -9,47 +9,53 @@ const {
   getProductById,
   updateProduct,
   deleteProduct,
-  addReview,           // ← Added
 } = require("../controllers/productController");
 
-// ===================== PRODUCT ROUTES =====================
-
-// Create Product
+// CREATE PRODUCT
 router.post("/", upload.single("image"), createProduct);
 
-// Get All Products
+// GET ALL PRODUCTS
 router.get("/", getProducts);
 
-// Get Products by Category
+// WAREHOUSE PRODUCTS
+router.get("/warehouse", async (req, res) => {
+  try {
+    const products = await Product.find({ 
+      type: { $in: ['warehouse', 'both'] } 
+    });
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// GET PRODUCTS BY CATEGORY
 router.get("/category/:category", async (req, res) => {
   try {
     const products = await Product.find({ category: req.params.category });
-    res.status(200).json(products);
+    res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-// Get Products by Seller
+// GET PRODUCTS BY SELLER
 router.get("/seller/:sellerId", async (req, res) => {
   try {
     const products = await Product.find({ seller: req.params.sellerId });
-    res.status(200).json(products);
+    res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-// Get Single Product
+// GET SINGLE PRODUCT
 router.get("/:id", getProductById);
 
-// Add Review to Product
-router.post("/:id/reviews", addReview);        // ← NEW ROUTE
-
-// Update Product
+// UPDATE PRODUCT
 router.put("/:id", upload.single("image"), updateProduct);
 
-// Delete Product
+// DELETE PRODUCT
 router.delete("/:id", deleteProduct);
 
 module.exports = router;

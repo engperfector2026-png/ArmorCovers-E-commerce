@@ -1,109 +1,95 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { ShoppingCart, Bell, User, LogOut, Menu, X } from "lucide-react";
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { ShoppingCart, Package, LogOut, User, Settings } from 'lucide-react';
 
-function Navbar() {
-  const [user, setUser] = useState<any>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
+const Navbar = () => {
+  const { user, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user") || "null");
-    setUser(storedUser);
-  }, []);
-
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    setUser(null);
-    navigate("/login");
+    logout();
+    navigate('/login');
   };
 
   return (
-    <nav className="bg-white shadow-md sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-6 py-4">
+    <nav className="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
+      <div className="max-w-7xl mx-auto px-6 py-5">
         <div className="flex justify-between items-center">
           
-          {/* Logo */}
+          {/* Logo - Letter A + Business Name */}
           <Link to="/" className="flex items-center gap-3">
-            <img 
-              src="/business Logo.jpg" 
-              alt="ArmorCovers" 
-              className="h-11 w-auto" 
-            />
-            <div className="font-bold text-2xl">
-              <span className="text-orange-600">ARMOR</span>
-              <span className="text-gray-800">COVERS</span>
+            <div className="w-10 h-10 bg-orange-500 rounded-2xl flex items-center justify-center text-white font-bold text-3xl">A</div>
+            <div>
+              <span className="text-3xl font-bold text-gray-900 tracking-tight">ARMOR</span>
+              <span className="text-3xl font-bold text-orange-500 tracking-tight">COVERS</span>
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* Main Navigation */}
           <div className="hidden md:flex items-center gap-8 text-gray-700 font-medium">
-            <Link to="/" className="hover:text-orange-500">Home</Link>
-            <Link to="/products" className="hover:text-orange-500">Marketplace</Link>
-            <Link to="/about" className="hover:text-orange-500">About</Link>
-            <Link to="/contact" className="hover:text-orange-500">Contact</Link>
+            <Link to="/products" className="hover:text-orange-500 transition">Shop</Link>
+            <Link to="/warehouse" className="hover:text-orange-500 transition">Warehouse</Link>
+            <Link to="/about" className="hover:text-orange-500 transition">About Us</Link>
           </div>
 
-          {/* Right Side */}
-          <div className="flex items-center gap-4">
-            <Link to="/cart" className="p-2 hover:text-orange-500">
-              <ShoppingCart size={24} />
-            </Link>
+          {/* Right Side - Role Aware */}
+          <div className="flex items-center gap-6">
+            {isAuthenticated ? (
+              <>
+                {/* Buyer Cart */}
+                {user?.role === 'buyer' && (
+                  <Link to="/cart" className="relative hover:text-orange-500 transition">
+                    <ShoppingCart size={26} />
+                  </Link>
+                )}
 
-            {user ? (
-              <div className="flex items-center gap-4">
+                {/* Seller Hub */}
+                {(user?.role === 'seller' || user?.role === 'vendor') && (
+                  <Link to="/seller-dashboard" className="flex items-center gap-2 hover:text-orange-500 transition">
+                    <Package size={24} />
+                    <span className="hidden md:inline">Seller Hub</span>
+                  </Link>
+                )}
+
+                {/* Admin */}
+                {user?.role === 'admin' && (
+                  <Link to="/admin-dashboard" className="flex items-center gap-2 hover:text-orange-500 transition">
+                    <Settings size={24} />
+                    <span className="hidden md:inline">Admin</span>
+                  </Link>
+                )}
+
+                {/* My Account */}
                 <Link 
-                  to={user.role === "seller" ? "/seller-dashboard" : "/buyer-dashboard"} 
-                  className="flex items-center gap-2 hover:text-orange-500"
+                  to={user?.role === 'buyer' ? "/buyer-dashboard" : user?.role === 'admin' ? "/admin-dashboard" : "/seller-dashboard"}
+                  className="flex items-center gap-2 hover:text-orange-500 transition font-medium"
                 >
-                  <User size={22} />
-                  <span className="hidden md:block">{user.name?.split(" ")[0]}</span>
+                  <User size={24} />
+                  <span className="hidden md:inline">My Account</span>
                 </Link>
 
-                <button onClick={handleLogout} className="text-gray-500 hover:text-red-500">
-                  <LogOut size={22} />
+                {/* Logout */}
+                <button
+                  onClick={handleLogout}
+                  className="text-red-500 hover:text-red-600 transition"
+                  title="Logout"
+                >
+                  <LogOut size={24} />
                 </button>
-              </div>
+              </>
             ) : (
-              <div className="flex items-center gap-3">
-                <Link 
-                  to="/login" 
-                  className="border border-orange-500 text-orange-500 px-5 py-2 rounded-xl hover:bg-orange-50"
-                >
-                  Login
-                </Link>
-                <Link 
-                  to="/register" 
-                  className="bg-orange-500 text-white px-5 py-2 rounded-xl hover:bg-orange-600"
-                >
-                  Register
-                </Link>
-              </div>
+              <Link 
+                to="/login" 
+                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded-2xl font-medium transition"
+              >
+                Login
+              </Link>
             )}
-
-            {/* Mobile Menu Toggle */}
-            <button 
-              className="md:hidden p-2"
-              onClick={() => setMenuOpen(!menuOpen)}
-            >
-              {menuOpen ? <X size={28} /> : <Menu size={28} />}
-            </button>
           </div>
         </div>
-
-        {/* Mobile Menu */}
-        {menuOpen && (
-          <div className="md:hidden mt-4 pt-4 border-t flex flex-col gap-4 text-lg">
-            <Link to="/" onClick={() => setMenuOpen(false)} className="py-2">Home</Link>
-            <Link to="/products" onClick={() => setMenuOpen(false)} className="py-2">Marketplace</Link>
-            <Link to="/about" onClick={() => setMenuOpen(false)} className="py-2">About</Link>
-            <Link to="/contact" onClick={() => setMenuOpen(false)} className="py-2">Contact</Link>
-          </div>
-        )}
       </div>
     </nav>
   );
-}
+};
 
 export default Navbar;

@@ -31,12 +31,11 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 const connectDB = require("./config/db");
 
 // Routes
-app.get("/", (req, res) => res.send("✅ ARMORCOVERS API Running!"));
+app.get("/", (req, res) => res.send("✅ ARMORCOVERS API Running"));
 
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
-app.use("/api/admin", require("./routes/adminRoutes"));
-app.use("/api/orders", require("./routes/orderRoutes"));
+app.use("/api/admin", require("./routes/adminRoutes")); // ← Make sure this line is here
 
 // Socket.io
 io.on("connection", (socket) => {
@@ -44,22 +43,10 @@ io.on("connection", (socket) => {
 
   socket.on("joinRoom", (roomId) => {
     socket.join(roomId);
-    console.log(`User joined room: ${roomId}`);
   });
 
   socket.on("sendMessage", (data) => {
     io.to(data.roomId).emit("receiveMessage", data);
-  });
-
-  socket.on("sendNotification", (data) => {
-    const receiverRoom = data.receiverRoom || `user-${data.receiverId}`;
-    io.to(receiverRoom).emit("newNotification", {
-      id: Date.now(),
-      type: data.type || "system",
-      title: data.title,
-      message: data.message,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    });
   });
 
   socket.on("disconnect", () => {
@@ -70,15 +57,14 @@ io.on("connection", (socket) => {
 const startServer = async () => {
   try {
     await connectDB();
-    console.log("✅ MongoDB Connected Successfully");
+    console.log("✅ MongoDB Connected");
 
     const PORT = process.env.PORT || 5000;
     server.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
   } catch (error) {
-    console.error("❌ Server Startup Failed:", error.message);
-    process.exit(1);
+    console.error("❌ Server Failed:", error.message);
   }
 };
 

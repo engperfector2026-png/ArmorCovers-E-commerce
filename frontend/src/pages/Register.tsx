@@ -1,128 +1,133 @@
 import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 
-function Register() {
+const Register = () => {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "buyer", // Default role
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const navigate = useNavigate();
 
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [password, setPassword] = useState("");
-  const [role, setRole] = useState("buyer");
-  const [loading, setLoading] = useState(false);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
 
-  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
 
     try {
-      const payload = {
-        name,
-        email,
-        phoneNumber,
-        password,
-        role,
-      };
+      setLoading(true);
+      setError("");
 
-      console.log("Sending registration data:", payload);
+      const res = await axios.post("http://localhost:5000/api/auth/register", formData);
 
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/register",
-        payload
-      );
-
-      console.log("Registration success:", response.data);
-      alert("Registration Successful! Please log in.");
+      alert("✅ Registration successful! You can now login.");
       navigate("/login");
-    } catch (error: any) {
-      console.error("Registration Error:", error.response?.data || error.message);
-      
-      const errorMsg = 
-        error.response?.data?.message || 
-        error.response?.data?.error || 
-        "Registration Failed. Please try again.";
 
-      alert(errorMsg);
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Registration failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-orange-50 flex items-center justify-center px-4 py-10">
-      <div className="bg-white rounded-3xl shadow-xl border border-orange-200 p-8 w-full max-w-lg">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-slate-900">
-            Join ArmorCovers
-          </h1>
-          <p className="text-slate-600 mt-2">
-            Create your marketplace account
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-3xl shadow-xl p-10">
+          <h2 className="text-3xl font-bold text-center mb-2">Create Account</h2>
+          <p className="text-gray-600 text-center mb-8">Join ArmorCovers Marketplace</p>
 
-        <form onSubmit={handleRegister} className="space-y-5">
-          <input
-            type="text"
-            placeholder="Enter Full Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full border border-slate-300 rounded-xl p-3 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-400"
-            required
-          />
+          {error && (
+            <div className="bg-red-50 text-red-600 p-4 rounded-2xl mb-6 text-center">
+              {error}
+            </div>
+          )}
 
-          <input
-            type="email"
-            placeholder="Enter Email Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full border border-slate-300 rounded-xl p-3 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-400"
-            required
-          />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block mb-2 text-slate-700 font-medium">Full Name</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                className="w-full px-4 py-4 rounded-2xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="Enter your full name"
+                required
+              />
+            </div>
 
-          <input
-            type="tel"
-            placeholder="Enter Phone Number"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            className="w-full border border-slate-300 rounded-xl p-3 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-400"
-            required
-          />
+            <div>
+              <label className="block mb-2 text-slate-700 font-medium">Email</label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className="w-full px-4 py-4 rounded-2xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
 
-          <input
-            type="password"
-            placeholder="Create Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full border border-slate-300 rounded-xl p-3 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-400"
-            required
-          />
+            <div>
+              <label className="block mb-2 text-slate-700 font-medium">Password</label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full px-4 py-4 rounded-2xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="Create password"
+                required
+              />
+            </div>
 
-          <div>
-            <label className="block text-slate-700 font-semibold mb-2">
-              Account Type
-            </label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="w-full border border-slate-300 rounded-xl p-3 bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-400"
+            <div>
+              <label className="block mb-2 text-slate-700 font-medium">Register As</label>
+              <select
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="w-full px-4 py-4 rounded-2xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option value="buyer">Buyer</option>
+                <option value="seller">Seller / Vendor</option>
+                {/* Admin option is hidden for security */}
+              </select>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-semibold transition disabled:opacity-50"
             >
-              <option value="buyer">Buyer Account</option>
-              <option value="seller">Seller Account</option>
-            </select>
-          </div>
+              {loading ? "Creating Account..." : "Register"}
+            </button>
+          </form>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-300 text-white py-3 rounded-xl font-semibold transition"
-          >
-            {loading ? "Creating Account..." : "Create Account"}
-          </button>
-        </form>
+          <div className="mt-8 text-center">
+            <p className="text-slate-600">
+              Already have an account?{" "}
+              <Link to="/login" className="text-orange-500 font-semibold hover:underline">
+                Login
+              </Link>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
-}
+};
 
 export default Register;

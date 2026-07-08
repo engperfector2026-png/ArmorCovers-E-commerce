@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { Link } from "react-router-dom";
-import { ShoppingCart, Search, Heart, RefreshCw } from "lucide-react";
+import axios from "axios";
+import { ShoppingCart, Search } from "lucide-react";
 
 interface Product {
   _id: string;
@@ -18,56 +18,32 @@ function Products() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [wishlist, setWishlist] = useState<string[]>([]);
 
   const categories = [
-    { name: "All", icon: "🌐" },
-    { name: "Vehicles", icon: "🚗" },
-    { name: "Fashion", icon: "👕" },
-    { name: "Electronics", icon: "📱" },
-    { name: "Home & Living", icon: "🏠" },
-    { name: "Agriculture", icon: "🌾" },
-    { name: "Beauty & Health", icon: "💄" },
-    { name: "Sports & Outdoors", icon: "⚽" },
-    { name: "Stationery", icon: "✏️" },
-    { name: "Education", icon: "📚" },
+    "All", "Vehicles", "Fashion", "Electronics", "Home", 
+    "Agriculture", "Beauty", "Sports", "Health", "Stationary", "Education"
   ];
 
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get("http://localhost:5000/api/products");
-      console.log("✅ Loaded products:", response.data.length);
-      setProducts(response.data);
-    } catch (error) {
-      console.error("❌ Error fetching products:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get("http://localhost:5000/api/products");
+        setProducts(response.data);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchProducts();
-
-    const savedWishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
-    setWishlist(savedWishlist);
   }, []);
-
-  const toggleWishlist = (product: Product) => {
-    const isInWishlist = wishlist.includes(product._id);
-    let updatedWishlist = isInWishlist 
-      ? wishlist.filter(id => id !== product._id)
-      : [...wishlist, product._id];
-
-    setWishlist(updatedWishlist);
-    localStorage.setItem("wishlist", JSON.stringify(updatedWishlist));
-  };
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch = 
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase());
-
+    
     const matchesCategory = selectedCategory === "All" || product.category === selectedCategory;
 
     return matchesSearch && matchesCategory;
@@ -75,49 +51,35 @@ function Products() {
 
   return (
     <div className="bg-slate-50 min-h-screen">
-      {/* Header */}
-      <div className="bg-gradient-to-br from-slate-900 to-black text-white py-16">
-        <div className="max-w-6xl mx-auto px-6 text-center">
-          <h1 className="text-5xl font-bold mb-4">Marketplace</h1>
-          <p className="text-xl text-gray-300">Total Products: {products.length}</p>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="sticky top-0 bg-white border-b z-40 shadow-sm">
-        <div className="max-w-6xl mx-auto px-6 py-6 space-y-6">
-          <div className="flex gap-4">
+      {/* Search & Category Filter */}
+      <div className="sticky top-0 bg-white z-40 border-b">
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-6 top-4 text-gray-400" size={24} />
+              <Search className="absolute left-4 top-4 text-gray-400" size={20} />
               <input
                 type="text"
                 placeholder="Search products..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-16 pr-6 py-4 bg-gray-100 rounded-3xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full pl-12 pr-4 py-4 border rounded-2xl focus:outline-none focus:border-orange-500"
               />
             </div>
-            <button 
-              onClick={fetchProducts}
-              className="bg-white border px-6 py-4 rounded-3xl hover:bg-gray-50 flex items-center gap-2"
-            >
-              <RefreshCw size={20} /> Refresh
-            </button>
           </div>
 
-          {/* Categories */}
-          <div className="flex flex-wrap gap-3">
-            {categories.map((cat) => (
+          {/* Category Filter */}
+          <div className="flex gap-2 mt-6 overflow-x-auto pb-3">
+            {categories.map((category) => (
               <button
-                key={cat.name}
-                onClick={() => setSelectedCategory(cat.name)}
-                className={`px-6 py-3 rounded-2xl font-medium transition-all ${
-                  selectedCategory === cat.name 
-                    ? "bg-orange-500 text-white shadow-md" 
-                    : "bg-white border border-gray-200 hover:border-orange-300"
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-6 py-2.5 rounded-2xl text-sm font-medium whitespace-nowrap transition ${
+                  selectedCategory === category 
+                    ? "bg-orange-500 text-white" 
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-700"
                 }`}
               >
-                <span className="mr-2">{cat.icon}</span> {cat.name}
+                {category}
               </button>
             ))}
           </div>
@@ -125,63 +87,52 @@ function Products() {
       </div>
 
       {/* Products Grid */}
-      <section className="max-w-6xl mx-auto px-6 py-12">
+      <div className="max-w-7xl mx-auto px-6 py-10">
         {loading ? (
-          <div className="text-center py-20 text-xl">Loading products...</div>
+          <div className="text-center py-20">Loading products...</div>
         ) : filteredProducts.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-3xl p-16">
-            <p className="text-3xl text-gray-500">No products found</p>
+          <div className="text-center py-20">
+            <p className="text-2xl">No products found</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {filteredProducts.map((product) => {
-              const isInWishlist = wishlist.includes(product._id);
-              return (
-                <Link
-                  key={product._id}
-                  to={`/products/${product._id}`}
-                  className="group bg-white rounded-3xl overflow-hidden shadow hover:shadow-2xl transition-all hover:-translate-y-1"
-                >
-                  <div className="h-72 relative overflow-hidden bg-gray-100">
-                    {product.image ? (
-                      <img
-                        src={`http://localhost:5000${product.image}`}
-                        alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                        onError={(e) => e.currentTarget.src = "https://via.placeholder.com/400x300?text=No+Image"}
-                      />
-                    ) : (
-                      <div className="h-full flex items-center justify-center text-7xl">📦</div>
-                    )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredProducts.map((product) => (
+              <Link 
+                key={product._id} 
+                to={`/products/${product._id}`}
+                className="bg-white rounded-3xl shadow-sm hover:shadow-xl transition group overflow-hidden"
+              >
+                <div className="h-56 bg-gray-100 relative">
+                  <img
+                    src={product.image ? `http://localhost:5000${product.image}` : "https://via.placeholder.com/400"}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                  />
+                  {product.stock > 0 && (
+                    <div className="absolute top-4 right-4 bg-green-500 text-white text-xs px-3 py-1 rounded-full font-medium">In Stock</div>
+                  )}
+                </div>
 
+                <div className="p-6">
+                  <p className="uppercase text-xs tracking-widest text-orange-500 mb-2">{product.category}</p>
+                  <h3 className="font-semibold text-lg line-clamp-2 mb-3 group-hover:text-orange-600">{product.name}</h3>
+                  <p className="text-gray-600 text-sm line-clamp-2 mb-4">{product.description}</p>
+
+                  <div className="flex justify-between items-center">
+                    <p className="text-3xl font-bold text-orange-600">KSh {product.price.toLocaleString()}</p>
                     <button
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWishlist(product); }}
-                      className="absolute top-4 right-4 p-2 bg-white rounded-full shadow z-20"
+                      onClick={(e) => { e.preventDefault(); alert(`✅ ${product.name} added to cart!`); }}
+                      className="bg-orange-500 hover:bg-orange-600 text-white p-3 rounded-2xl transition"
                     >
-                      <Heart size={24} className={isInWishlist ? "fill-red-500 text-red-500" : "text-gray-400"} />
+                      <ShoppingCart size={22} />
                     </button>
                   </div>
-
-                  <div className="p-6">
-                    <p className="text-xs text-orange-500 mb-1">{product.category}</p>
-                    <h3 className="font-semibold text-lg line-clamp-2 mb-3">{product.name}</h3>
-                    <p className="text-gray-600 text-sm line-clamp-2 mb-4">{product.description}</p>
-                    <div className="flex justify-between items-center">
-                      <p className="text-3xl font-bold text-orange-600">KSh {product.price.toLocaleString()}</p>
-                      <button
-                        onClick={(e) => { e.preventDefault(); alert(`✅ ${product.name} added to cart!`); }}
-                        className="bg-orange-500 text-white p-3 rounded-2xl"
-                      >
-                        <ShoppingCart size={22} />
-                      </button>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
+                </div>
+              </Link>
+            ))}
           </div>
         )}
-      </section>
+      </div>
     </div>
   );
 }

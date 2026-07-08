@@ -5,6 +5,14 @@ ARMORCOVERS Marketplace is a full-stack e-commerce platform that connects buyers
 ---
 
 ## Features
+- User Authentication (Buyer, Seller, Admin)
+- Product Marketplace
+- **Retail Warehouse** with bulk ordering
+- Real-time Chat
+- M-Pesa Payment Integration
+- Role-based Dashboards
+-Retail only.
+-Warehouse only 
 
 ### Customer Features
 - User Registration and Login

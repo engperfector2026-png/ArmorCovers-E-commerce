@@ -103,12 +103,6 @@ ARMORCOVERS/
 
 ## Installation
 
-### Clone the Repository
-
-```bash
-git clone https://github.com/yourusername/armorcovers-marketplace.git
-cd armorcovers-marketplace
-
 **To setup the system on the localhost the following are the procedures:**
 1. Create account in the MONGODB ATLAS
 2. Create the database named Armorcovers
@@ -123,6 +117,13 @@ cd armorcovers-marketplace
       Alternative DNS 8.8.4.4
 7. Rnode -e "require('mongoose').connect(process.env.MONGO_URI).then(()=>console.log('Connected')).catch(err=>console.error(err))"
 run the test above in powershell to test the connection 
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/armorcovers-marketplace.git
+cd armorcovers-marketplace
+
 
 ```
 

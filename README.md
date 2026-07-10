@@ -108,6 +108,22 @@ ARMORCOVERS/
 ```bash
 git clone https://github.com/yourusername/armorcovers-marketplace.git
 cd armorcovers-marketplace
+
+**To setup the system on the localhost the following are the procedures:**
+1. Create account in the MONGODB ATLAS
+2. Create the database named Armorcovers
+3. Get the connection string ie click Clusters-Connect-Drivers in the MongoDB created account.
+4. Set the .env in the backend to link the backend of the system to the database created in the MongoDB Atlas.
+5. I the MONGODB Atlas navigate to DATABASE AND NETWORK ACCESS AND ADD THE IP LISTING IE 0.0.0.0/0 to allow access from anywhere
+6. Test the connection by ensuring stable internet connection, aslo set the following to enable the google access to the Atlas
+      .click windows+R
+       . Type ncpa.clp and press enter
+      .Click the active wireless network ie wifi or wired network ie ethernet connection and navigate to properties and add the following DNS
+      preferred DNS 8.8.8.8
+      Alternative DNS 8.8.4.4
+7. Rnode -e "require('mongoose').connect(process.env.MONGO_URI).then(()=>console.log('Connected')).catch(err=>console.error(err))"
+run the test above in powershell to test the connection 
+
 ```
 
 ---

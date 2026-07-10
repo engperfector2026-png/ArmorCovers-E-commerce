@@ -115,7 +115,7 @@ ARMORCOVERS/
       .Click the active wireless network ie wifi or wired network ie ethernet connection and navigate to properties and add the following DNS
       preferred DNS 8.8.8.8
       Alternative DNS 8.8.4.4
-7. Rnode -e "require('mongoose').connect(process.env.MONGO_URI).then(()=>console.log('Connected')).catch(err=>console.error(err))"
+7. node -e "require('mongoose').connect(process.env.MONGO_URI).then(()=>console.log('Connected')).catch(err=>console.error(err))"
 run the test above in powershell to test the connection 
 
 ### Clone the Repository

@@ -18,31 +18,64 @@ const io = new Server(server, {
   }
 });
 
-// Middleware
+// ====================== MIDDLEWARE ======================
 app.use(cors({
   origin: ["http://localhost:3000", "http://localhost:5173", "http://localhost:5174"],
   credentials: true
 }));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// Database
-const connectDB = require("./config/db");
+// ====================== TEST ROUTE ======================
+app.get("/test-db", async (req, res) => {
+  try {
+    const User = require("./models/User");
+    const Product = require("./models/Product");
 
-// Routes
+    const usersCount = await User.countDocuments();
+    const productsCount = await Product.countDocuments().catch(() => 0);
+
+    const sampleUser = await User.findOne().select("name email role verified").lean();
+
+    res.json({
+      success: true,
+      message: "Database connection & query test successful!",
+      stats: { totalUsers: usersCount, totalProducts: productsCount },
+      sampleUser: sampleUser || "No users found",
+      note: "If you see numbers, your DB is working."
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Database test failed", error: error.message });
+  }
+});
+
+// ====================== BASIC ROUTE ======================
 app.get("/", (req, res) => res.send("✅ ARMORCOVERS API Running"));
 
+// ====================== MAIN ROUTES ======================
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
-app.use("/api/admin", require("./routes/adminRoutes")); // ← Make sure this line is here
+app.use("/api/admin", require("./routes/adminRoutes"));
 
-// Socket.io
+// ====================== VERIFICATION ROUTES (Safe) ======================
+try {
+  const verificationRoutes = require("./routes/verificationRoutes");
+  app.use("/api/seller", verificationRoutes);
+  app.use("/api/verify", verificationRoutes);
+  console.log("✅ Verification routes loaded");
+} catch (err) {
+  console.log("⚠️ Verification routes not found yet");
+}
+
+// ====================== SOCKET.IO ======================
 io.on("connection", (socket) => {
   console.log("🟢 User connected:", socket.id);
 
   socket.on("joinRoom", (roomId) => {
     socket.join(roomId);
+    console.log(`User joined room: ${roomId}`);
   });
 
   socket.on("sendMessage", (data) => {
@@ -54,17 +87,21 @@ io.on("connection", (socket) => {
   });
 });
 
+// ====================== START SERVER ======================
+const connectDB = require("./config/db");
+
 const startServer = async () => {
   try {
     await connectDB();
-    console.log("✅ MongoDB Connected");
+    console.log("✅ MongoDB Connected Successfully");
 
     const PORT = process.env.PORT || 5000;
     server.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`🔍 Test DB: http://localhost:${PORT}/test-db`);
     });
   } catch (error) {
-    console.error("❌ Server Failed:", error.message);
+    console.error("❌ Server Startup Failed:", error.message);
   }
 };
 

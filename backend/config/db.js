@@ -2,11 +2,17 @@ const mongoose = require("mongoose");
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI || "mongodb://127.0.0.1:27017/armorcovers");
+    if (!process.env.MONGO_URI) {
+      console.error("❌ MONGO_URI is not defined in .env file");
+      process.exit(1);
+    }
 
-    console.log("✅ MongoDB Connected Successfully");
+    await mongoose.connect(process.env.MONGO_URI);
+
+    console.log("✅ MongoDB Atlas Connected Successfully");
   } catch (error) {
     console.error("❌ MongoDB Connection Failed:", error.message);
+    process.exit(1);
   }
 };
 

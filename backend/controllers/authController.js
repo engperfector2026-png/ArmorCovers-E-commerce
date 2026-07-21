@@ -16,7 +16,7 @@ const registerUser = async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -28,7 +28,7 @@ const registerUser = async (req, res) => {
 
     const user = new User({
       name: name.trim(),
-      email: email.toLowerCase(),
+      email: email.toLowerCase().trim(),
       password: hashedPassword,
       role: role || 'customer'
     });
@@ -59,9 +59,9 @@ const registerUser = async (req, res) => {
 // ======================================
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
 
-    console.log("🔍 Login Attempt for:", email);
+    console.log("📥 Login Attempt for:", email);
 
     if (!email || !password) {
       return res.status(400).json({
@@ -70,21 +70,24 @@ const loginUser = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    email = email.toLowerCase().trim();
+
+    const user = await User.findOne({ email });
 
     if (!user) {
-      console.log("❌ User not found");
+      console.log("❌ User not found for email:", email);
       return res.status(400).json({
         success: false,
         message: "Invalid email or password"
       });
     }
 
+    console.log("✅ User found:", user.email, "| Role:", user.role);
+
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log("Password Match:", isMatch);
 
     if (!isMatch) {
-      console.log("❌ Incorrect Password");
+      console.log("❌ Incorrect password for:", email);
       return res.status(400).json({
         success: false,
         message: "Invalid email or password"

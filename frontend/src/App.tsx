@@ -5,6 +5,7 @@ import Footer from "./components/Footer";
 import SellerRoute from "./components/SellerRoute";
 import BuyerRoute from "./components/BuyerRoute";
 import AdminRoute from "./components/AdminRoute";
+import ChatBot from "./pages/ChatBot"; // ← Imported
 
 // Public Pages
 import Home from "./pages/Home";
@@ -21,6 +22,7 @@ import Warehouse from "./pages/Warehouse";
 
 // Seller Pages
 import SellerDashboard from "./pages/SellerDashboard";
+import SellerVerification from "./pages/SellerVerification";
 import MyProducts from "./pages/MyProducts";
 import MyOrders from "./pages/MyOrders";
 import AddProduct from "./pages/AddProduct";
@@ -35,11 +37,12 @@ import Success from "./pages/Success";
 import Returns from "./pages/Returns";
 import OrderTracking from "./pages/OrderTracking";
 
-// Other
+// Chat
 import Chat from "./pages/Chat";
 
 // Admin
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminVerification from "./pages/AdminVerification";
 import ManageUsers from "./pages/ManageUsers";
 import ManageOrders from "./pages/ManageOrders";
 import PaymentReports from "./pages/PaymentReports";
@@ -86,7 +89,7 @@ function App() {
             <Route path="/returns" element={<BuyerRoute><Returns /></BuyerRoute>} />
             <Route path="/track-order" element={<BuyerRoute><OrderTracking /></BuyerRoute>} />
 
-            {/* ====================== OTHER ====================== */}
+            {/* ====================== CHAT ====================== */}
             <Route path="/chat/:roomId" element={<Chat />} />
 
             {/* ====================== ADMIN ROUTES ====================== */}
@@ -110,6 +113,9 @@ function App() {
         </main>
 
         <Footer />
+
+        {/* Floating ChatBot - Always Available */}
+        <ChatBot />
       </div>
     </BrowserRouter>
   );

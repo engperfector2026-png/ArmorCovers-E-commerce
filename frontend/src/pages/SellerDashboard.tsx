@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Package, DollarSign, Users, TrendingUp, Clock, BarChart3, Edit3, LogOut } from 'lucide-react';
+import { Plus, Package, DollarSign, Users, TrendingUp, Edit3, LogOut, Shield } from 'lucide-react';
 import axios from 'axios';
 import { Line } from 'react-chartjs-2';
 import {
@@ -24,23 +24,40 @@ const SellerDashboard = () => {
     pendingOrders: 0,
     thisMonthSales: 0,
   });
-
-  const [recentOrders, setRecentOrders] = useState([]);
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isVerified, setIsVerified] = useState(false);
+
   const navigate = useNavigate();
 
+  // Check verification status
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    if (!user.id) {
+      navigate('/login');
+      return;
+    }
+
+    const storedToken = localStorage.getItem(`seller_verification_token_${user.id}`);
+    if (storedToken) {
+      setIsVerified(true);
+    } else {
+      navigate('/seller/verify');
+    }
+  }, [navigate]);
+
+  // Fetch dashboard data
   useEffect(() => {
     const fetchSellerData = async () => {
       try {
         const user = JSON.parse(localStorage.getItem("user") || "{}");
-
         const productsRes = await axios.get(`http://localhost:5000/api/products/seller/${user.id || ''}`);
         const ordersRes = await axios.get(`http://localhost:5000/api/orders/seller/${user.id || ''}`);
 
         setStats({
           totalProducts: productsRes.data.length,
           totalOrders: ordersRes.data.length,
-          totalEarnings: ordersRes.data.reduce((sum: number, o: any) => sum + o.amount, 0),
+          totalEarnings: ordersRes.data.reduce((sum: number, o: any) => sum + (o.amount || 0), 0),
           pendingOrders: ordersRes.data.filter((o: any) => o.status === "Pending").length,
           thisMonthSales: 456000,
         });
@@ -52,7 +69,6 @@ const SellerDashboard = () => {
           status: o.status,
           date: new Date(o.createdAt).toLocaleDateString()
         })));
-
       } catch (error) {
         console.error("Failed to load seller data", error);
       } finally {
@@ -60,8 +76,8 @@ const SellerDashboard = () => {
       }
     };
 
-    fetchSellerData();
-  }, []);
+    if (isVerified) fetchSellerData();
+  }, [isVerified]);
 
   const salesTrendData = {
     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
@@ -81,6 +97,14 @@ const SellerDashboard = () => {
     navigate("/login");
   };
 
+  const forgetVerification = () => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    if (user.id) {
+      localStorage.removeItem(`seller_verification_token_${user.id}`);
+    }
+    navigate('/seller/verify');
+  };
+
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center text-xl">Loading your analytics...</div>;
   }
@@ -88,7 +112,6 @@ const SellerDashboard = () => {
   return (
     <div className="bg-slate-100 min-h-screen pb-12">
       <div className="max-w-7xl mx-auto px-6 py-10">
-        
         <div className="flex justify-between items-center mb-10">
           <div>
             <h1 className="text-4xl font-bold text-gray-900">Seller Analytics</h1>
@@ -96,12 +119,21 @@ const SellerDashboard = () => {
           </div>
           <div className="flex gap-4">
             <button
+              onClick={forgetVerification}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl flex items-center gap-3 font-semibold transition-all"
+            >
+              <Shield size={20} />
+              Re-verify
+            </button>
+
+            <button
               onClick={() => window.location.href = '/add-product'}
               className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3.5 rounded-2xl flex items-center gap-3 font-semibold transition-all hover:scale-105"
             >
               <Plus size={24} />
               Add New Product
             </button>
+
             <button
               onClick={handleLogout}
               className="border border-red-500 text-red-500 px-6 py-3.5 rounded-2xl flex items-center gap-3 font-semibold hover:bg-red-50 transition"
@@ -119,19 +151,16 @@ const SellerDashboard = () => {
             <h3 className="text-5xl font-bold">{stats.totalProducts}</h3>
             <p className="text-gray-600 mt-2">Total Products</p>
           </div>
-
           <div className="bg-white rounded-3xl p-8 shadow">
             <DollarSign className="text-green-500 mb-4" size={36} />
             <h3 className="text-5xl font-bold">KSh {stats.totalEarnings.toLocaleString()}</h3>
             <p className="text-gray-600 mt-2">Total Earnings</p>
           </div>
-
           <div className="bg-white rounded-3xl p-8 shadow">
             <Users className="text-blue-500 mb-4" size={36} />
             <h3 className="text-5xl font-bold">{stats.totalOrders}</h3>
             <p className="text-gray-600 mt-2">Total Orders</p>
           </div>
-
           <div className="bg-white rounded-3xl p-8 shadow">
             <TrendingUp className="text-orange-500 mb-4" size={36} />
             <h3 className="text-5xl font-bold text-orange-500">KSh {stats.thisMonthSales.toLocaleString()}</h3>
@@ -152,7 +181,7 @@ const SellerDashboard = () => {
           <div className="bg-white rounded-3xl p-8 shadow">
             <h2 className="text-2xl font-semibold mb-6">Recent Orders</h2>
             <div className="space-y-5">
-              {recentOrders.map((order: any, i) => (
+              {recentOrders.map((order, i) => (
                 <div key={i} className="flex justify-between items-center p-5 bg-gray-50 rounded-2xl">
                   <div>
                     <p className="font-medium">{order.product}</p>
@@ -160,7 +189,9 @@ const SellerDashboard = () => {
                   </div>
                   <div className="text-right">
                     <p className="font-bold">KSh {order.amount.toLocaleString()}</p>
-                    <p className={`text-sm ${order.status === "Pending" ? "text-orange-500" : "text-green-500"}`}>{order.status}</p>
+                    <p className={`text-sm ${order.status === "Pending" ? "text-orange-500" : "text-green-500"}`}>
+                      {order.status}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -172,36 +203,36 @@ const SellerDashboard = () => {
         <div className="mt-12 bg-white rounded-3xl p-8 shadow">
           <h2 className="text-2xl font-semibold mb-8">Quick Actions</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <button 
+            <button
               onClick={() => window.location.href = '/add-product'}
-              className="bg-white border border-gray-200 p-8 rounded-3xl text-left hover:shadow-xl transition"
+              className="bg-white border border-gray-200 p-8 rounded-3xl text-left hover:shadow-xl transition hover:border-orange-300"
             >
               <Plus className="text-orange-500 mb-4" size={40} />
               <h3 className="font-semibold text-lg">Add Product</h3>
               <p className="text-sm text-gray-500 mt-2">List a new item</p>
             </button>
 
-            <button 
+            <button
               onClick={() => window.location.href = '/my-products'}
-              className="bg-white border border-gray-200 p-8 rounded-3xl text-left hover:shadow-xl transition"
+              className="bg-white border border-gray-200 p-8 rounded-3xl text-left hover:shadow-xl transition hover:border-orange-300"
             >
               <Package className="text-orange-500 mb-4" size={40} />
               <h3 className="font-semibold text-lg">Manage Products</h3>
               <p className="text-sm text-gray-500 mt-2">Edit or delete listings</p>
             </button>
 
-            <button 
+            <button
               onClick={() => window.location.href = '/my-orders'}
-              className="bg-white border border-gray-200 p-8 rounded-3xl text-left hover:shadow-xl transition"
+              className="bg-white border border-gray-200 p-8 rounded-3xl text-left hover:shadow-xl transition hover:border-orange-300"
             >
               <Users className="text-orange-500 mb-4" size={40} />
               <h3 className="font-semibold text-lg">View Orders</h3>
               <p className="text-sm text-gray-500 mt-2">Track customer orders</p>
             </button>
 
-            <button 
+            <button
               onClick={() => window.location.href = '/my-products'}
-              className="bg-white border border-gray-200 p-8 rounded-3xl text-left hover:shadow-xl transition"
+              className="bg-white border border-gray-200 p-8 rounded-3xl text-left hover:shadow-xl transition hover:border-orange-300"
             >
               <Edit3 className="text-orange-500 mb-4" size={40} />
               <h3 className="font-semibold text-lg">Edit Products</h3>

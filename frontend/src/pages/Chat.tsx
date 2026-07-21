@@ -5,9 +5,15 @@ import { ArrowLeft, Send } from "lucide-react";
 
 const socket = io("http://localhost:5000");
 
+interface Message {
+  sender: string;
+  text: string;
+  time: string;
+}
+
 const Chat = () => {
   const { roomId } = useParams();
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -19,7 +25,7 @@ const Chat = () => {
 
     socket.emit("joinRoom", roomId);
 
-    const handleReceiveMessage = (data: any) => {
+    const handleReceiveMessage = (data: Message) => {
       setMessages((prev) => [...prev, data]);
     };
 
@@ -40,7 +46,7 @@ const Chat = () => {
     const data = {
       roomId,
       sender: user.name || "You",
-      text: message,
+      text: message.trim(),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 

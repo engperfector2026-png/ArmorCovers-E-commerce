@@ -11,6 +11,8 @@ const {
   deleteProduct,
 } = require("../controllers/productController");
 
+// ===================== PRODUCT ROUTES =====================
+
 // CREATE PRODUCT
 router.post("/", upload.single("image"), createProduct);
 
@@ -33,16 +35,6 @@ router.get("/warehouse", async (req, res) => {
 router.get("/category/:category", async (req, res) => {
   try {
     const products = await Product.find({ category: req.params.category });
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// GET PRODUCTS BY SELLER
-router.get("/seller/:sellerId", async (req, res) => {
-  try {
-    const products = await Product.find({ seller: req.params.sellerId });
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });

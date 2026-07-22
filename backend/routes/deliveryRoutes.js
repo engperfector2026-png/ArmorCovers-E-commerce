@@ -1,22 +1,23 @@
 const express = require("express");
 const router = express.Router();
+const multer = require("multer");
 const { protect } = require("../middleware/authMiddleware");
+
+const upload = multer({ dest: "uploads/riders/" });
 
 const {
   registerRider,
-  updateLocation,
-  findNearestRider,
-  acceptDelivery,
-  updateDeliveryStatus
+  getRiderProfile,
 } = require("../controllers/deliveryController");
 
-// Rider Routes
-router.post("/register", protect, registerRider);
-router.post("/update-location", protect, updateLocation);
+// Rider Registration (with file uploads)
+router.post("/register", protect, upload.fields([
+  { name: "idCopy", maxCount: 1 },
+  { name: "license", maxCount: 1 },
+  { name: "passportPhoto", maxCount: 1 }
+]), registerRider);
 
-// Order Delivery Routes
-router.post("/find-nearest", protect, findNearestRider);
-router.post("/accept/:orderId", protect, acceptDelivery);
-router.post("/update-status/:orderId", protect, updateDeliveryStatus);
+// Get Rider Profile
+router.get("/profile/:id", protect, getRiderProfile);
 
 module.exports = router;

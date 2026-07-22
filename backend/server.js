@@ -33,37 +33,44 @@ app.get("/test-db", async (req, res) => {
   try {
     const User = require("./models/User");
     const Product = require("./models/Product");
+    const Rider = require("./models/Rider");
 
     const usersCount = await User.countDocuments();
     const productsCount = await Product.countDocuments().catch(() => 0);
-
-    const sampleUser = await User.findOne().select("name email role verified").lean();
+    const ridersCount = await Rider.countDocuments().catch(() => 0);
 
     res.json({
       success: true,
       message: "Database connection & query test successful!",
-      stats: { totalUsers: usersCount, totalProducts: productsCount },
-      sampleUser: sampleUser || "No users found",
-      note: "If you see numbers, your DB is working."
+      stats: { 
+        totalUsers: usersCount, 
+        totalProducts: productsCount,
+        totalRiders: ridersCount 
+      }
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Database test failed", error: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
 // ====================== BASIC ROUTE ======================
-app.get("/", (req, res) => res.send("✅ ARMORCOVERS API Running"));
+app.get("/", (req, res) => res.send("✅ ARMORCOVERS API Running with Rider System"));
 
 // ====================== MAIN ROUTES ======================
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
 
-// ====================== VERIFICATION ROUTES (Safe) ======================
+// ====================== RIDER ROUTES ======================
+app.use("/api/delivery", require("./routes/deliveryRoutes"));
+
+// ====================== CHAT ROUTE ======================
+app.use("/api/chat", require("./routes/chatRoutes"));
+
+// ====================== VERIFICATION ROUTES ======================
 try {
   const verificationRoutes = require("./routes/verificationRoutes");
   app.use("/api/seller", verificationRoutes);
-  app.use("/api/verify", verificationRoutes);
   console.log("✅ Verification routes loaded");
 } catch (err) {
   console.log("⚠️ Verification routes not found yet");

@@ -5,7 +5,6 @@ import Footer from "./components/Footer";
 import SellerRoute from "./components/SellerRoute";
 import BuyerRoute from "./components/BuyerRoute";
 import AdminRoute from "./components/AdminRoute";
-import ChatBot from "./pages/ChatBot"; // ← Imported
 
 // Public Pages
 import Home from "./pages/Home";
@@ -20,9 +19,8 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Warehouse from "./pages/Warehouse";
 
-// Seller Pages
-import SellerDashboard from "./pages/SellerDashboard";
-import SellerVerification from "./pages/SellerVerification";
+// Vendor / Seller Pages
+import VendorDashboard from "./pages/VendorDashboard";
 import MyProducts from "./pages/MyProducts";
 import MyOrders from "./pages/MyOrders";
 import AddProduct from "./pages/AddProduct";
@@ -37,12 +35,16 @@ import Success from "./pages/Success";
 import Returns from "./pages/Returns";
 import OrderTracking from "./pages/OrderTracking";
 
+// Rider Pages
+import RiderRegister from "./pages/RiderRegister";
+import RiderDashboard from "./pages/RiderDashboard";
+
 // Chat
 import Chat from "./pages/Chat";
+import ChatBot from "./pages/ChatBot";   // ← Added
 
-// Admin
+// Admin Pages
 import AdminDashboard from "./pages/AdminDashboard";
-import AdminVerification from "./pages/AdminVerification";
 import ManageUsers from "./pages/ManageUsers";
 import ManageOrders from "./pages/ManageOrders";
 import PaymentReports from "./pages/PaymentReports";
@@ -73,8 +75,8 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* ====================== SELLER ROUTES ====================== */}
-            <Route path="/seller-dashboard" element={<SellerRoute><SellerDashboard /></SellerRoute>} />
+            {/* ====================== VENDOR (SELLER) ROUTES ====================== */}
+            <Route path="/vendor/dashboard" element={<SellerRoute><VendorDashboard /></SellerRoute>} />
             <Route path="/my-products" element={<SellerRoute><MyProducts /></SellerRoute>} />
             <Route path="/my-orders" element={<SellerRoute><MyOrders /></SellerRoute>} />
             <Route path="/add-product" element={<SellerRoute><AddProduct /></SellerRoute>} />
@@ -89,6 +91,10 @@ function App() {
             <Route path="/returns" element={<BuyerRoute><Returns /></BuyerRoute>} />
             <Route path="/track-order" element={<BuyerRoute><OrderTracking /></BuyerRoute>} />
 
+            {/* ====================== RIDER ROUTES ====================== */}
+            <Route path="/rider-register" element={<RiderRegister />} />
+            <Route path="/rider-dashboard" element={<RiderDashboard />} />
+
             {/* ====================== CHAT ====================== */}
             <Route path="/chat/:roomId" element={<Chat />} />
 
@@ -99,7 +105,7 @@ function App() {
             <Route path="/admin/payments" element={<AdminRoute><PaymentReports /></AdminRoute>} />
             <Route path="/admin/settings" element={<AdminRoute><PlatformSettings /></AdminRoute>} />
 
-            {/* 404 Page */}
+            {/* ====================== 404 ====================== */}
             <Route path="*" element={
               <div className="min-h-screen flex items-center justify-center bg-slate-100">
                 <div className="text-center">
@@ -114,7 +120,7 @@ function App() {
 
         <Footer />
 
-        {/* Floating ChatBot - Always Available */}
+        {/* Floating ChatBot - Always Visible */}
         <ChatBot />
       </div>
     </BrowserRouter>

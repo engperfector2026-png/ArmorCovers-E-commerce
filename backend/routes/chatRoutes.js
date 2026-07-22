@@ -2,31 +2,36 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 
-// Chatbot Endpoint
 router.post("/", async (req, res) => {
-  const { message, userId, role } = req.body;
+  const { message } = req.body;
 
   try {
-    // Call Grok API (or OpenAI)
-    const aiResponse = await axios.post("https://api.x.ai/v1/chat/completions", {
-      model: "grok-beta",
+    const response = await axios.post("https://api.openai.com/v1/chat/completions", {
+      model: "gpt-4o-mini",           // Fast & cheap
       messages: [
-        { role: "system", content: "You are an helpful assistant for ARMORCOVERS e-commerce. Help with products, orders, and give clear directives." },
+        {
+          role: "system",
+          content: "You are a friendly and helpful sales assistant for ARMORCOVERS. Recommend products, answer questions about delivery, stock, and encourage purchases."
+        },
         { role: "user", content: message }
-      ]
+      ],
+      temperature: 0.7,
+      max_tokens: 400
     }, {
-      headers: { Authorization: `Bearer ${process.env.GROK_API_KEY}` }
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        "Content-Type": "application/json"
+      }
     });
 
-    const reply = aiResponse.data.choices[0].message.content;
-
-    // Optional: Save chat to database for history
-    // await ChatHistory.create({ userId, message, reply });
-
+    const reply = response.data.choices[0].message.content;
     res.json({ success: true, reply });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, reply: "Sorry, I'm having trouble responding right now." });
+    console.error("OpenAI Error:", error.response?.data || error.message);
+    res.json({ 
+      success: true, 
+      reply: "Hi! How can I help you? Try asking about products, delivery, or stock." 
+    });
   }
 });
 

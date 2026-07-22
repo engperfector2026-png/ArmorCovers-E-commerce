@@ -5,11 +5,20 @@ interface AdminRouteProps {
 }
 
 const AdminRoute = ({ children }: AdminRouteProps) => {
-  const user = JSON.parse(localStorage.getItem("user") || "{}");
   const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const verificationToken = localStorage.getItem(`admin_verification_token_${user.id}`);
 
-  if (!token || !user || user.role !== "admin") {
+  if (!token) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (user.role !== "admin") {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!verificationToken) {
+    return <Navigate to="/admin/verify" replace />;
   }
 
   return <>{children}</>;

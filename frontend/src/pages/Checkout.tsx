@@ -64,6 +64,7 @@ function Checkout() {
   const [mpesaPhone, setMpesaPhone] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [deliveryMethod, setDeliveryMethod] = useState<"normal" | "boda">("normal");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -135,7 +136,7 @@ function Checkout() {
       // M-Pesa on Delivery
       localStorage.setItem("lastOrderTotal", total.toString());
       localStorage.removeItem("cart");
-      alert("🎉 Order placed successfully! M-Pesa payment on delivery.");
+      alert(`🎉 Order placed successfully! ${deliveryMethod === "boda" ? "Boda Boda" : "M-Pesa"} payment on delivery.`);
       navigate("/success");
     }
   };
@@ -188,6 +189,27 @@ function Checkout() {
                   <textarea name="address" value={formData.address} onChange={handleInputChange} className="w-full px-5 py-4 rounded-2xl border h-24" placeholder="House number, street, landmark..." required />
                 </div>
 
+                {/* Delivery Method */}
+                <div>
+                  <label className="block text-gray-700 mb-3">Delivery Method</label>
+                  <div className="flex gap-4">
+                    <button 
+                      type="button"
+                      onClick={() => setDeliveryMethod("normal")}
+                      className={`flex-1 py-4 rounded-2xl border ${deliveryMethod === "normal" ? "border-orange-500 bg-orange-50" : "border-gray-300"}`}
+                    >
+                      Normal Delivery
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setDeliveryMethod("boda")}
+                      className={`flex-1 py-4 rounded-2xl border ${deliveryMethod === "boda" ? "border-orange-500 bg-orange-50" : "border-gray-300"}`}
+                    >
+                      🚀 Boda Boda Express
+                    </button>
+                  </div>
+                </div>
+
                 {/* Payment Method */}
                 <div>
                   <label className="block text-gray-700 mb-3">Payment Method</label>
@@ -223,7 +245,7 @@ function Checkout() {
                 </div>
 
                 <button type="submit" disabled={loading} className="w-full bg-green-600 hover:bg-green-700 text-white py-5 rounded-2xl font-semibold text-xl transition disabled:opacity-50">
-                  {loading ? "Processing..." : paymentMethod === "checkout" ? "Pay Now with M-Pesa" : "Place Order - M-Pesa on Delivery"}
+                  {loading ? "Processing..." : paymentMethod === "checkout" ? "Pay Now with M-Pesa" : `Place Order - ${deliveryMethod === "boda" ? "Boda Express" : "M-Pesa on Delivery"}`}
                 </button>
               </form>
             </div>

@@ -1,92 +1,39 @@
 const Rider = require("../models/Rider");
-const Order = require("../models/Order");
-const { protect } = require("../middleware/authMiddleware");
+const User = require("../models/User");
 
-// Register as Boda Boda Rider
+// Register Rider
 const registerRider = async (req, res) => {
   try {
-    const { phone, bikePlate } = req.body;
+    const { fullName, phone, bikePlate, subCounty } = req.body;
     const userId = req.user.id;
 
-    const existingRider = await Rider.findOne({ user: userId });
-    if (existingRider) {
-      return res.status(400).json({ success: false, message: "Already registered as rider" });
-    }
+    const existing = await Rider.findOne({ user: userId });
+    if (existing) return res.status(400).json({ message: "Already registered" });
 
     const rider = new Rider({
       user: userId,
-      name: req.user.name,
+      fullName,
       phone,
       bikePlate,
-      location: { coordinates: [0, 0] },
-      isAvailable: true
+      subCounty,
+      idCopy: req.files?.idCopy ? req.files.idCopy[0].path : null,
+      license: req.files?.license ? req.files.license[0].path : null,
+      passportPhoto: req.files?.passportPhoto ? req.files.passportPhoto[0].path : null,
     });
 
     await rider.save();
-    res.status(201).json({ success: true, message: "Rider registered successfully", rider });
+    res.status(201).json({ success: true, message: "Rider registered", rider });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 
-// Update Rider Location (Real-time)
-const updateLocation = async (req, res) => {
+// Get Rider Profile
+const getRiderProfile = async (req, res) => {
   try {
-    const { longitude, latitude } = req.body;
-    const userId = req.user.id;
-
-    const rider = await Rider.findOne({ user: userId });
+    const rider = await Rider.findOne({ user: req.params.id }).populate('user');
     if (!rider) return res.status(404).json({ message: "Rider not found" });
-
-    rider.location = { type: 'Point', coordinates: [longitude, latitude] };
-    await rider.save();
-
-    res.json({ success: true, message: "Location updated" });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Find Nearest Available Rider
-const findNearestRider = async (req, res) => {
-  try {
-    const { longitude, latitude, orderId } = req.body;
-
-    const nearestRider = await Rider.findOne({
-      isAvailable: true,
-      currentOrder: null
-    }).near({
-      center: [longitude, latitude],
-      maxDistance: 10000, // 10km radius
-      spherical: true
-    });
-
-    if (!nearestRider) {
-      return res.status(404).json({ message: "No available riders nearby" });
-    }
-
-    res.json({ success: true, rider: nearestRider });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Accept Delivery
-const acceptDelivery = async (req, res) => {
-  try {
-    const { orderId } = req.params;
-    const riderId = req.user.id; // Assuming rider is logged in
-
-    const order = await Order.findById(orderId);
-    if (!order) return res.status(404).json({ message: "Order not found" });
-
-    order.delivery.rider = riderId;
-    order.delivery.status = "accepted";
-    await order.save();
-
-    await Rider.findByIdAndUpdate(riderId, { currentOrder: orderId, isAvailable: false });
-
-    res.json({ success: true, message: "Delivery accepted" });
+    res.json(rider);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -94,7 +41,5 @@ const acceptDelivery = async (req, res) => {
 
 module.exports = {
   registerRider,
-  updateLocation,
-  findNearestRider,
-  acceptDelivery
+  getRiderProfile,
 };

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Package, DollarSign, Users, TrendingUp, Edit3, LogOut, Shield } from 'lucide-react';
+import { Plus, Package, DollarSign, Users, TrendingUp, Edit3, LogOut, Shield, Upload } from 'lucide-react';
 import axios from 'axios';
 import { Line } from 'react-chartjs-2';
 import {
@@ -27,6 +27,7 @@ const SellerDashboard = () => {
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isVerified, setIsVerified] = useState(false);
+  const [showVerification, setShowVerification] = useState(false);
 
   const navigate = useNavigate();
 
@@ -39,11 +40,7 @@ const SellerDashboard = () => {
     }
 
     const storedToken = localStorage.getItem(`seller_verification_token_${user.id}`);
-    if (storedToken) {
-      setIsVerified(true);
-    } else {
-      navigate('/seller/verify');
-    }
+    setIsVerified(!!storedToken);
   }, [navigate]);
 
   // Fetch dashboard data
@@ -76,8 +73,8 @@ const SellerDashboard = () => {
       }
     };
 
-    if (isVerified) fetchSellerData();
-  }, [isVerified]);
+    fetchSellerData();
+  }, []);
 
   const salesTrendData = {
     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
@@ -102,7 +99,7 @@ const SellerDashboard = () => {
     if (user.id) {
       localStorage.removeItem(`seller_verification_token_${user.id}`);
     }
-    navigate('/seller/verify');
+    setIsVerified(false);
   };
 
   if (loading) {
@@ -118,13 +115,15 @@ const SellerDashboard = () => {
             <p className="text-gray-600 mt-1">Real-time business performance</p>
           </div>
           <div className="flex gap-4">
-            <button
-              onClick={forgetVerification}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl flex items-center gap-3 font-semibold transition-all"
-            >
-              <Shield size={20} />
-              Re-verify
-            </button>
+            {!isVerified && (
+              <button
+                onClick={() => setShowVerification(true)}
+                className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-2xl flex items-center gap-3 font-semibold transition-all"
+              >
+                <Shield size={20} />
+                Verify Identity
+              </button>
+            )}
 
             <button
               onClick={() => window.location.href = '/add-product'}
@@ -143,6 +142,20 @@ const SellerDashboard = () => {
             </button>
           </div>
         </div>
+
+        {!isVerified && (
+          <div className="bg-amber-50 border border-amber-200 rounded-3xl p-8 mb-8 text-center">
+            <Shield className="mx-auto text-amber-500 mb-4" size={48} />
+            <h3 className="text-xl font-semibold mb-2">Identity Verification Required</h3>
+            <p className="text-gray-600 mb-4">Please verify your identity to access Quick Actions and full features.</p>
+            <button
+              onClick={() => setShowVerification(true)}
+              className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-2xl font-semibold"
+            >
+              Start Verification
+            </button>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
@@ -168,8 +181,8 @@ const SellerDashboard = () => {
           </div>
         </div>
 
+        {/* Rest of your dashboard content */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Sales Trend */}
           <div className="bg-white rounded-3xl p-8 shadow">
             <h2 className="text-2xl font-semibold mb-6">Sales Trend</h2>
             <div className="h-80">
@@ -177,7 +190,6 @@ const SellerDashboard = () => {
             </div>
           </div>
 
-          {/* Recent Orders */}
           <div className="bg-white rounded-3xl p-8 shadow">
             <h2 className="text-2xl font-semibold mb-6">Recent Orders</h2>
             <div className="space-y-5">
@@ -199,47 +211,19 @@ const SellerDashboard = () => {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="mt-12 bg-white rounded-3xl p-8 shadow">
-          <h2 className="text-2xl font-semibold mb-8">Quick Actions</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <button
-              onClick={() => window.location.href = '/add-product'}
-              className="bg-white border border-gray-200 p-8 rounded-3xl text-left hover:shadow-xl transition hover:border-orange-300"
-            >
-              <Plus className="text-orange-500 mb-4" size={40} />
-              <h3 className="font-semibold text-lg">Add Product</h3>
-              <p className="text-sm text-gray-500 mt-2">List a new item</p>
-            </button>
-
-            <button
-              onClick={() => window.location.href = '/my-products'}
-              className="bg-white border border-gray-200 p-8 rounded-3xl text-left hover:shadow-xl transition hover:border-orange-300"
-            >
-              <Package className="text-orange-500 mb-4" size={40} />
-              <h3 className="font-semibold text-lg">Manage Products</h3>
-              <p className="text-sm text-gray-500 mt-2">Edit or delete listings</p>
-            </button>
-
-            <button
-              onClick={() => window.location.href = '/my-orders'}
-              className="bg-white border border-gray-200 p-8 rounded-3xl text-left hover:shadow-xl transition hover:border-orange-300"
-            >
-              <Users className="text-orange-500 mb-4" size={40} />
-              <h3 className="font-semibold text-lg">View Orders</h3>
-              <p className="text-sm text-gray-500 mt-2">Track customer orders</p>
-            </button>
-
-            <button
-              onClick={() => window.location.href = '/my-products'}
-              className="bg-white border border-gray-200 p-8 rounded-3xl text-left hover:shadow-xl transition hover:border-orange-300"
-            >
-              <Edit3 className="text-orange-500 mb-4" size={40} />
-              <h3 className="font-semibold text-lg">Edit Products</h3>
-              <p className="text-sm text-gray-500 mt-2">Update your listings</p>
-            </button>
+        {/* Quick Actions - Only show if verified */}
+        {isVerified && (
+          <div className="mt-12 bg-white rounded-3xl p-8 shadow">
+            <h2 className="text-2xl font-semibold mb-8">Quick Actions</h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {/* Your quick action buttons here */}
+              <button onClick={() => window.location.href = '/add-product'} className="...">Add Product</button>
+              <button onClick={() => window.location.href = '/my-products'} className="...">Manage Products</button>
+              <button onClick={() => window.location.href = '/my-orders'} className="...">View Orders</button>
+              <button onClick={() => window.location.href = '/my-products'} className="...">Edit Products</button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

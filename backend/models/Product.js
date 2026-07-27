@@ -15,6 +15,7 @@ const productSchema = new mongoose.Schema({
   },
   image: String,
   seller: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+<<<<<<< HEAD
 
   // ====================== FLASH SALE FIELDS ======================
   isFlashSale: {
@@ -35,6 +36,8 @@ const productSchema = new mongoose.Schema({
   },
   // ==============================================================
 
+=======
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
   createdAt: { type: Date, default: Date.now }
 });
 

@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
+<<<<<<< HEAD
 import { ShoppingCart, Heart, ArrowLeft, Star, Plus, Minus, MessageCircle, Zap, Clock } from "lucide-react";
+=======
+import { ShoppingCart, Heart, ArrowLeft, Star, Plus, Minus, MessageCircle } from "lucide-react";
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
 
 interface Product {
   _id: string;
@@ -15,6 +19,7 @@ interface Product {
   image?: string;
   reviews: any[];
   colors?: string[];
+<<<<<<< HEAD
   seller?: string;
   // Flash Sale fields
   isFlashSale?: boolean;
@@ -22,6 +27,9 @@ interface Product {
   flashSaleStart?: string;
   flashSaleEnd?: string;
   flashSaleStock?: number;
+=======
+  seller?: string; // Seller ID
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
 }
 
 const categories = [
@@ -51,6 +59,7 @@ function ProductDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+<<<<<<< HEAD
   // Countdown state
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -103,6 +112,8 @@ function ProductDetails() {
     return () => clearInterval(timer);
   }, [product]);
 
+=======
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
   useEffect(() => {
     const fetchProduct = async () => {
       if (!id) return;
@@ -166,16 +177,20 @@ function ProductDetails() {
 
   const addToCart = () => {
     if (!product) return;
+<<<<<<< HEAD
 
     const onFlash = isOnFlashSale(product);
     const finalPrice = onFlash ? product.flashSalePrice! : product.price;
 
+=======
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
     const cart = JSON.parse(localStorage.getItem("cart") || "[]");
     const existing = cart.findIndex((item: any) => item._id === product._id);
 
     if (existing !== -1) {
       cart[existing].quantity = (cart[existing].quantity || 1) + quantity;
     } else {
+<<<<<<< HEAD
       cart.push({
         ...product,
         price: finalPrice,
@@ -183,12 +198,19 @@ function ProductDetails() {
         selectedColor,
         isFlashSale: onFlash,
       });
+=======
+      cart.push({ ...product, quantity, selectedColor });
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
     }
 
     localStorage.setItem("cart", JSON.stringify(cart));
     alert(`✅ Added ${quantity} × ${selectedColor} of ${product.name} to cart!`);
   };
 
+<<<<<<< HEAD
+=======
+  // Chat with Seller
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
   const chatWithSeller = () => {
     if (!product?.seller) {
       alert("Seller information not available.");
@@ -198,11 +220,15 @@ function ProductDetails() {
   };
 
   if (loading) {
+<<<<<<< HEAD
     return (
       <div className="bg-slate-50 min-h-screen flex justify-center items-center text-xl font-semibold text-slate-700">
         Loading Product...
       </div>
     );
+=======
+    return <div className="bg-slate-50 min-h-screen flex justify-center items-center text-xl font-semibold text-slate-700">Loading Product...</div>;
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
   }
 
   if (error || !product) {
@@ -211,16 +237,21 @@ function ProductDetails() {
         <div className="text-6xl mb-6">😕</div>
         <h2 className="text-3xl font-bold text-slate-800 mb-4">Product Not Found</h2>
         <p className="text-slate-600 mb-8 max-w-md">{error}</p>
+<<<<<<< HEAD
         <Link
           to="/products"
           className="bg-orange-500 text-white px-8 py-4 rounded-2xl font-semibold hover:bg-orange-600 transition"
         >
+=======
+        <Link to="/products" className="bg-orange-500 text-white px-8 py-4 rounded-2xl font-semibold hover:bg-orange-600 transition">
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
           ← Back to Shop
         </Link>
       </div>
     );
   }
 
+<<<<<<< HEAD
   const onFlash = isOnFlashSale(product);
   const displayPrice = onFlash ? product.flashSalePrice! : product.price;
 
@@ -230,6 +261,12 @@ function ProductDetails() {
         <Link to="/products" className="inline-flex items-center gap-2 text-orange-500 mb-8 hover:underline">
           ← Back to Shop
         </Link>
+=======
+  return (
+    <div className="bg-slate-50 min-h-screen py-12 px-6">
+      <div className="max-w-7xl mx-auto">
+        <Link to="/products" className="inline-flex items-center gap-2 text-orange-500 mb-8 hover:underline">← Back to Shop</Link>
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
 
         <div className="grid lg:grid-cols-12 gap-16">
           {/* Main Content */}
@@ -239,6 +276,7 @@ function ProductDetails() {
               <div className="relative group">
                 <div className="bg-white rounded-3xl shadow p-4 overflow-hidden">
                   {product.image ? (
+<<<<<<< HEAD
                     <img
                       src={`http://localhost:5000${product.image}`}
                       alt={product.name}
@@ -256,6 +294,15 @@ function ProductDetails() {
                       <Zap size={16} fill="white" />
                       FLASH SALE
                     </div>
+=======
+                    <img 
+                      src={`http://localhost:5000${product.image}`} 
+                      alt={product.name} 
+                      className="w-full h-[520px] object-cover rounded-2xl transition-transform duration-700 group-hover:scale-110"
+                    />
+                  ) : (
+                    <div className="h-[520px] bg-gray-100 rounded-2xl flex items-center justify-center text-8xl">📦</div>
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
                   )}
                 </div>
               </div>
@@ -269,6 +316,7 @@ function ProductDetails() {
                   <h1 className="text-5xl font-bold text-slate-900 mt-4">{product.name}</h1>
                 </div>
 
+<<<<<<< HEAD
                 {/* ====================== PRICE + COUNTDOWN ====================== */}
                 {onFlash ? (
                   <div className="space-y-4">
@@ -317,6 +365,9 @@ function ProductDetails() {
                     KSh {product.price.toLocaleString()}
                   </div>
                 )}
+=======
+                <div className="text-5xl font-bold text-orange-600">KSh {product.price.toLocaleString()}</div>
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
 
                 <div className="prose text-slate-600 leading-relaxed">{product.description}</div>
 
@@ -324,6 +375,7 @@ function ProductDetails() {
                 <div className="border rounded-3xl p-6">
                   <p className="font-medium mb-3">Quantity</p>
                   <div className="flex items-center gap-4">
+<<<<<<< HEAD
                     <button
                       onClick={() => handleQuantityChange(quantity - 1)}
                       className="w-12 h-12 border rounded-xl flex items-center justify-center hover:bg-gray-100"
@@ -337,6 +389,11 @@ function ProductDetails() {
                     >
                       <Plus size={20} />
                     </button>
+=======
+                    <button onClick={() => handleQuantityChange(quantity - 1)} className="w-12 h-12 border rounded-xl flex items-center justify-center hover:bg-gray-100"><Minus size={20} /></button>
+                    <span className="text-2xl font-semibold w-12 text-center">{quantity}</span>
+                    <button onClick={() => handleQuantityChange(quantity + 1)} className="w-12 h-12 border rounded-xl flex items-center justify-center hover:bg-gray-100"><Plus size={20} /></button>
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
                   </div>
                 </div>
 
@@ -348,11 +405,15 @@ function ProductDetails() {
                       <button
                         key={index}
                         onClick={() => setSelectedColor(color)}
+<<<<<<< HEAD
                         className={`px-6 py-3 rounded-2xl border transition-all hover:shadow-md ${
                           selectedColor === color
                             ? "border-blue-500 bg-blue-50 font-medium"
                             : "border-gray-200 hover:border-gray-300"
                         }`}
+=======
+                        className={`px-6 py-3 rounded-2xl border transition-all hover:shadow-md ${selectedColor === color ? 'border-blue-500 bg-blue-50 font-medium' : 'border-gray-200 hover:border-gray-300'}`}
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
                       >
                         {color}
                       </button>
@@ -362,6 +423,7 @@ function ProductDetails() {
 
                 {/* Action Buttons */}
                 <div className="flex gap-6">
+<<<<<<< HEAD
                   <button
                     onClick={addToCart}
                     className={`flex-1 py-5 rounded-2xl font-semibold flex items-center justify-center gap-3 transition ${
@@ -374,6 +436,12 @@ function ProductDetails() {
                     {onFlash ? "Grab Deal Now" : "Add to Cart"}
                   </button>
                   <button
+=======
+                  <button onClick={addToCart} className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-5 rounded-2xl font-semibold flex items-center justify-center gap-3 transition">
+                    <ShoppingCart size={24} /> Add to Cart
+                  </button>
+                  <button 
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
                     onClick={chatWithSeller}
                     className="flex-1 border border-blue-500 text-blue-600 hover:bg-blue-50 py-5 rounded-2xl font-semibold flex items-center justify-center gap-3 transition"
                   >
@@ -387,6 +455,7 @@ function ProductDetails() {
             <div className="mt-16 border rounded-3xl p-10">
               <h2 className="text-3xl font-bold mb-6">Built to Withstand the Test of Time</h2>
               <ul className="grid md:grid-cols-2 gap-6 text-lg">
+<<<<<<< HEAD
                 <li className="flex gap-4">
                   <span className="text-green-500">✓</span> Premium Weather-Resistant Materials
                 </li>
@@ -405,20 +474,36 @@ function ProductDetails() {
                 <li className="flex gap-4">
                   <span className="text-green-500">✓</span> Eco-Friendly & Sustainable Production
                 </li>
+=======
+                <li className="flex gap-4"><span className="text-green-500">✓</span> Premium Weather-Resistant Materials</li>
+                <li className="flex gap-4"><span className="text-green-500">✓</span> Reinforced Stitching & Durable Seams</li>
+                <li className="flex gap-4"><span className="text-green-500">✓</span> UV Protection & Fade Resistance</li>
+                <li className="flex gap-4"><span className="text-green-500">✓</span> Easy to Clean & Maintain</li>
+                <li className="flex gap-4"><span className="text-green-500">✓</span> 2-Year Warranty Included</li>
+                <li className="flex gap-4"><span className="text-green-500">✓</span> Eco-Friendly & Sustainable Production</li>
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
               </ul>
             </div>
 
             {/* Customer Reviews */}
             <div className="mt-20">
+<<<<<<< HEAD
               <h2 className="text-4xl font-bold mb-8">
                 Customer Reviews ({product.reviews ? product.reviews.length : 0})
               </h2>
+=======
+              <h2 className="text-4xl font-bold mb-8">Customer Reviews ({product.reviews ? product.reviews.length : 0})</h2>
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
 
               <div className="bg-white rounded-3xl p-10 shadow mb-12">
                 <h3 className="font-semibold text-xl mb-6">Write a Review</h3>
 
                 <div className="flex gap-1 mb-6">
+<<<<<<< HEAD
                   {[1, 2, 3, 4, 5].map((star) => (
+=======
+                  {[1,2,3,4,5].map((star) => (
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
                     <button
                       key={star}
                       onClick={() => setReview({ ...review, rating: star })}
@@ -445,6 +530,7 @@ function ProductDetails() {
                 </button>
               </div>
 
+<<<<<<< HEAD
               {product.reviews &&
                 product.reviews.length > 0 &&
                 product.reviews.map((r, index) => (
@@ -471,6 +557,30 @@ function ProductDetails() {
                 {categories.map((cat, index) => (
                   <Link
                     key={index}
+=======
+              {product.reviews && product.reviews.length > 0 && product.reviews.map((r, index) => (
+                <div key={index} className="bg-white rounded-3xl p-8 mb-8 shadow-sm">
+                  <div className="flex justify-between items-start">
+                    <p className="font-medium text-lg">{r.name}</p>
+                    <p className="text-orange-500 text-2xl">{"★".repeat(r.rating)}</p>
+                  </div>
+                  <p className="text-gray-600 mt-4 leading-relaxed">{r.comment}</p>
+                  <p className="text-xs text-gray-400 mt-6">{new Date(r.date).toLocaleDateString()}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Sidebar - Category Block */}
+          <div className="lg:col-span-4">
+            <div className="bg-white rounded-3xl shadow-sm p-8 sticky top-8">
+              <h3 className="font-bold text-2xl mb-6 text-gray-900">Shop by Category</h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                {categories.map((cat, index) => (
+                  <Link 
+                    key={index} 
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
                     to={`/category/${cat.name}`}
                     className="bg-slate-50 hover:bg-orange-50 p-6 rounded-2xl text-center transition flex flex-col items-center"
                   >
@@ -500,6 +610,7 @@ function ProductDetails() {
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
             {filteredRelated.map((p) => (
+<<<<<<< HEAD
               <Link
                 key={p._id || p.id}
                 to={`/products/${p._id || p.id}`}
@@ -521,6 +632,15 @@ function ProductDetails() {
                   <p className="text-orange-600 font-bold mt-2">
                     KSh {p.price.toLocaleString()}
                   </p>
+=======
+              <Link key={p._id || p.id} to={`/products/${p._id || p.id}`} className="bg-white rounded-3xl shadow hover:shadow-xl transition overflow-hidden block group">
+                <div className="h-40 bg-gray-100 overflow-hidden">
+                  {p.image ? <img src={`http://localhost:5000${p.image}`} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform" /> : <div className="h-full flex items-center justify-center text-6xl">📦</div>}
+                </div>
+                <div className="p-5">
+                  <h3 className="font-semibold text-sm line-clamp-2">{p.name}</h3>
+                  <p className="text-orange-600 font-bold mt-2">KSh {p.price.toLocaleString()}</p>
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
                 </div>
               </Link>
             ))}

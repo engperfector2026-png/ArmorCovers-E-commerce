@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+<<<<<<< HEAD
 import { ShoppingCart, Search, ArrowLeft, Zap } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
+=======
+import { ShoppingCart, Search, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
 
 interface Product {
   _id: string;
@@ -14,12 +19,15 @@ interface Product {
   minimumOrder: number;
   category: string;
   subcategory?: string;
+<<<<<<< HEAD
   // Flash Sale fields
   isFlashSale?: boolean;
   flashSalePrice?: number;
   flashSaleStart?: string;
   flashSaleEnd?: string;
   flashSaleStock?: number;
+=======
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
 }
 
 interface SubCategory {
@@ -40,6 +48,7 @@ function Shop() {
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>("All");
   const [searchTerm, setSearchTerm] = useState("");
 
+<<<<<<< HEAD
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
@@ -49,6 +58,8 @@ function Shop() {
     }
   }, [searchParams]);
 
+=======
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
   const mainCategories: MainCategory[] = [
     {
       name: "Electronics",
@@ -183,7 +194,13 @@ function Shop() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+<<<<<<< HEAD
         const response = await axios.get("http://localhost:5000/api/products");
+=======
+        console.log("Fetching products...");
+        const response = await axios.get("http://localhost:5000/api/products");
+        console.log("Products received:", response.data.length);
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
         setProducts(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error("Error fetching products:", error);
@@ -192,6 +209,7 @@ function Shop() {
         setLoading(false);
       }
     };
+<<<<<<< HEAD
     fetchProducts();
   }, []);
 
@@ -225,11 +243,21 @@ function Shop() {
       isFlashSale: isOnFlashSale(product),
     };
     cart.push(cartItem);
+=======
+
+    fetchProducts();
+  }, []);
+
+  const addToCart = (product: Product) => {
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    cart.push(product);
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
     localStorage.setItem("cart", JSON.stringify(cart));
     alert(`✅ ${product.name} added to cart!`);
   };
 
   const filteredProducts = products.filter(product => {
+<<<<<<< HEAD
     const matchesSearch = searchTerm === "" ||
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -238,10 +266,22 @@ function Shop() {
     if (!matchesSearch) return false;
     if (!selectedMainCategory) return true;
     if (product.category !== selectedMainCategory) return false;
+=======
+    const matchesSearch = searchTerm === "" || 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    if (!matchesSearch) return false;
+
+    if (!selectedMainCategory) return true;
+    if (product.category !== selectedMainCategory) return false;
+
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
     if (selectedSubCategory === "All") return true;
     return product.subcategory === selectedSubCategory;
   });
 
+<<<<<<< HEAD
   // Sort: Flash sales first
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     const aFlash = isOnFlashSale(a) ? 1 : 0;
@@ -345,17 +385,52 @@ function Shop() {
               <h3 className="font-bold text-xl mb-6">Categories</h3>
 
               <div className="relative mb-7">
+=======
+  const currentMain = mainCategories.find(cat => cat.name === selectedMainCategory);
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center text-2xl">Loading Shop...</div>;
+  }
+
+  return (
+    <div className="bg-gradient-to-br from-slate-50 via-white to-slate-50 min-h-screen py-12 px-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Hero */}
+        <div className="text-center mb-16">
+          <h1 className="text-6xl font-bold mb-4 tracking-tight bg-gradient-to-r from-slate-900 via-orange-600 to-slate-900 bg-clip-text text-transparent">
+            ArmorCovers Shop
+          </h1>
+          <p className="text-2xl text-gray-600">Premium Retail Products • Fast Delivery</p>
+        </div>
+
+        <div className="grid lg:grid-cols-12 gap-10">
+          {/* Left Sidebar - Categories */}
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-3xl p-8 shadow-sm sticky top-8">
+              <h3 className="font-bold text-2xl mb-6">Categories</h3>
+
+              <div className="relative mb-8">
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search products..."
+<<<<<<< HEAD
                   className="w-full bg-gray-100 border border-gray-200 rounded-2xl py-3.5 pl-11 pr-5 focus:outline-none focus:border-orange-500 text-sm"
                 />
                 <Search className="absolute left-4 top-3.5 text-gray-400" size={18} />
               </div>
 
               <div className="space-y-1.5">
+=======
+                  className="w-full bg-gray-100 border border-gray-200 rounded-2xl py-4 pl-12 pr-6 focus:outline-none focus:border-orange-500"
+                />
+                <Search className="absolute left-5 top-4 text-gray-400" size={22} />
+              </div>
+
+              <div className="space-y-2">
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
                 {mainCategories.map((category) => (
                   <button
                     key={category.name}
@@ -363,13 +438,21 @@ function Shop() {
                       setSelectedMainCategory(category.name);
                       setSelectedSubCategory("All");
                     }}
+<<<<<<< HEAD
                     className={`w-full text-left px-5 py-3.5 rounded-2xl font-medium flex items-center gap-3 transition-all text-sm ${
+=======
+                    className={`w-full text-left px-6 py-4 rounded-2xl font-medium flex items-center gap-4 transition-all ${
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
                       selectedMainCategory === category.name
                         ? "bg-orange-500 text-white"
                         : "hover:bg-gray-100"
                     }`}
                   >
+<<<<<<< HEAD
                     <span className="text-xl">{category.icon}</span>
+=======
+                    <span className="text-2xl">{category.icon}</span>
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
                     <span>{category.name}</span>
                   </button>
                 ))}
@@ -377,16 +460,25 @@ function Shop() {
             </div>
           </div>
 
+<<<<<<< HEAD
           {/* ===================== PRODUCTS AREA ===================== */}
           <div className="lg:col-span-9">
             {selectedMainCategory && currentMain && (
               <div className="hidden lg:block mb-8">
                 <div className="flex items-center gap-4 mb-5">
+=======
+          {/* Main Content Area */}
+          <div className="lg:col-span-9">
+            {selectedMainCategory && currentMain && (
+              <div className="mb-10">
+                <div className="flex items-center gap-4 mb-6">
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
                   <button
                     onClick={() => {
                       setSelectedMainCategory(null);
                       setSelectedSubCategory("All");
                     }}
+<<<<<<< HEAD
                     className="flex items-center gap-2 text-orange-600 hover:text-orange-700 font-medium text-sm"
                   >
                     <ArrowLeft size={18} /> All Categories
@@ -397,11 +489,25 @@ function Shop() {
                 </div>
 
                 <div className="flex gap-2.5 flex-wrap">
+=======
+                    className="flex items-center gap-2 text-orange-600 hover:text-orange-700 font-medium"
+                  >
+                    <ArrowLeft size={22} /> All Categories
+                  </button>
+                  <h3 className="text-3xl font-bold text-gray-800">{selectedMainCategory}</h3>
+                </div>
+
+                <div className="flex gap-3 flex-wrap">
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
                   {currentMain.subcategories.map((sub) => (
                     <button
                       key={sub.value}
                       onClick={() => setSelectedSubCategory(sub.value)}
+<<<<<<< HEAD
                       className={`px-5 py-2.5 rounded-2xl font-medium text-sm transition-all ${
+=======
+                      className={`px-7 py-3.5 rounded-2xl font-medium transition-all ${
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
                         selectedSubCategory === sub.value
                           ? "bg-orange-500 text-white shadow-md"
                           : "bg-white border hover:bg-gray-50 border-gray-200"
@@ -415,6 +521,7 @@ function Shop() {
             )}
 
             {/* Products Grid */}
+<<<<<<< HEAD
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6">
               {sortedProducts.length > 0 ? (
                 sortedProducts.map((product) => {
@@ -515,6 +622,45 @@ function Shop() {
                       Try a different search term
                     </p>
                   )}
+=======
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredProducts.length > 0 ? (
+                filteredProducts.map((product) => (
+                  <div
+                    key={product._id}
+                    className="bg-white rounded-3xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden group border border-gray-100 flex flex-col h-full"
+                  >
+                    <Link to={`/products/${product._id}`} className="flex-1 flex flex-col">
+                      <div className="relative h-52 overflow-hidden">
+                        <img
+                          src={product.image ? `http://localhost:5000${product.image}` : "https://via.placeholder.com/600x400"}
+                          alt={product.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      </div>
+                      <div className="p-6 flex-1 flex flex-col">
+                        <h3 className="font-bold text-lg mb-2 line-clamp-2 leading-tight">{product.name}</h3>
+                        <p className="text-gray-600 mb-6 line-clamp-3 text-[14px] flex-1">{product.description}</p>
+                        <div className="mt-auto">
+                          <p className="text-xs text-gray-500">Retail Price</p>
+                          <p className="text-3xl font-bold text-orange-600">KSh {product.price.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    </Link>
+                    <div className="p-6 pt-0">
+                      <button
+                        onClick={(e) => { e.preventDefault(); addToCart(product); }}
+                        className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-semibold flex items-center justify-center gap-3 transition-all active:scale-95 text-sm"
+                      >
+                        <ShoppingCart size={18} /> Add to Cart
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full text-center py-20">
+                  <p className="text-gray-500 text-xl">No products found</p>
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
                 </div>
               )}
             </div>

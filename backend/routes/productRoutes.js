@@ -11,9 +11,12 @@ const {
   deleteProduct,
 } = require("../controllers/productController");
 
+<<<<<<< HEAD
 // Optional: import protect middleware if you have it
 // const { protect } = require("../middleware/authMiddleware");
 
+=======
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
 // ===================== PRODUCT ROUTES =====================
 
 // CREATE PRODUCT
@@ -25,8 +28,13 @@ router.get("/", getProducts);
 // WAREHOUSE PRODUCTS
 router.get("/warehouse", async (req, res) => {
   try {
+<<<<<<< HEAD
     const products = await Product.find({
       type: { $in: ["warehouse", "both"] },
+=======
+    const products = await Product.find({ 
+      type: { $in: ['warehouse', 'both'] } 
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
     });
     res.json(products);
   } catch (error) {
@@ -44,6 +52,7 @@ router.get("/category/:category", async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
 // ====================== FLASH SALE ======================
 // PUT /api/products/:id/flash-sale
 router.put("/:id/flash-sale", async (req, res) => {
@@ -97,6 +106,8 @@ router.put("/:id/flash-sale", async (req, res) => {
   }
 });
 
+=======
+>>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
 // GET SINGLE PRODUCT
 router.get("/:id", getProductById);
 

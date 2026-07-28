@@ -4,16 +4,32 @@ const dotenv = require("dotenv");
 const path = require("path");
 const http = require("http");
 const { Server } = require("socket.io");
+const fs = require("fs");
 
 dotenv.config();
 
 const app = express();
 const server = http.createServer(app);
 
+// ====================== ENSURE UPLOAD FOLDERS EXIST ======================
+const uploadsRoot = path.join(__dirname, "uploads");
+const sellerDocsDir = path.join(uploadsRoot, "seller-docs");
+
+if (!fs.existsSync(uploadsRoot)) {
+  fs.mkdirSync(uploadsRoot, { recursive: true });
+}
+if (!fs.existsSync(sellerDocsDir)) {
+  fs.mkdirSync(sellerDocsDir, { recursive: true });
+}
+
 // ====================== SOCKET.IO ======================
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://localhost:5173", "http://localhost:5174"],
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "http://localhost:5174",
+    ],
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -22,13 +38,19 @@ const io = new Server(server, {
 // ====================== MIDDLEWARE ======================
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://localhost:5173", "http://localhost:5174"],
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "http://localhost:5174",
+    ],
     credentials: true,
   })
 );
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve uploaded files (products + seller documents)
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // ====================== TEST ROUTE ======================
@@ -67,7 +89,7 @@ app.get("/test-db", async (req, res) => {
 
 // ====================== BASIC ROUTE ======================
 app.get("/", (req, res) => {
-  res.send("✅ ARMORCOVERS API Running with Rider System + Returns");
+  res.send("✅ ARMORCOVERS API Running with Rider System + Returns + Seller Docs");
 });
 
 // ====================== MAIN ROUTES ======================
@@ -81,12 +103,13 @@ app.use("/api/mpesa", require("./routes/mpesaRoutes"));
 app.use("/api/delivery", require("./routes/deliveryRoutes"));
 
 // ====================== RETURNS ROUTES ======================
-// (Create routes/returnRoutes.js later if you don't have it yet)
 try {
   app.use("/api/returns", require("./routes/returnRoutes"));
   console.log("✅ Return routes loaded");
 } catch (err) {
-  console.log("⚠️ Return routes not found yet – create routes/returnRoutes.js when ready");
+  console.log(
+    "⚠️ Return routes not found yet – create routes/returnRoutes.js when ready"
+  );
 }
 
 // ====================== CHAT ROUTES ======================
@@ -114,7 +137,6 @@ io.on("connection", (socket) => {
     io.to(data.roomId).emit("receiveMessage", data);
   });
 
-  // Optional: Real-time delivery status updates
   socket.on("joinDeliveryRoom", (deliveryId) => {
     socket.join(`delivery_${deliveryId}`);
     console.log(`User joined delivery room: delivery_${deliveryId}`);
@@ -139,6 +161,8 @@ const startServer = async () => {
       console.log(`🔍 Test DB: http://localhost:${PORT}/test-db`);
       console.log(`🛵 Rider Registration: http://localhost:${PORT}/api/delivery/register`);
       console.log(`📦 Returns: http://localhost:${PORT}/api/returns`);
+      console.log(`📁 Uploads: http://localhost:${PORT}/uploads`);
+      console.log(`📄 Seller Docs: http://localhost:${PORT}/uploads/seller-docs`);
     });
   } catch (error) {
     console.error("❌ Server Startup Failed:", error.message);

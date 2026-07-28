@@ -11,12 +11,6 @@ const {
   deleteProduct,
 } = require("../controllers/productController");
 
-<<<<<<< HEAD
-// Optional: import protect middleware if you have it
-// const { protect } = require("../middleware/authMiddleware");
-
-=======
->>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
 // ===================== PRODUCT ROUTES =====================
 
 // CREATE PRODUCT
@@ -28,13 +22,8 @@ router.get("/", getProducts);
 // WAREHOUSE PRODUCTS
 router.get("/warehouse", async (req, res) => {
   try {
-<<<<<<< HEAD
     const products = await Product.find({
       type: { $in: ["warehouse", "both"] },
-=======
-    const products = await Product.find({ 
-      type: { $in: ['warehouse', 'both'] } 
->>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
     });
     res.json(products);
   } catch (error) {
@@ -52,7 +41,6 @@ router.get("/category/:category", async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
 // ====================== FLASH SALE ======================
 // PUT /api/products/:id/flash-sale
 router.put("/:id/flash-sale", async (req, res) => {
@@ -74,14 +62,12 @@ router.put("/:id/flash-sale", async (req, res) => {
       flashSaleStock,
     } = req.body;
 
-    // Update flash sale fields
     if (isFlashSale !== undefined) product.isFlashSale = isFlashSale;
     if (flashSalePrice !== undefined) product.flashSalePrice = flashSalePrice;
     if (flashSaleStart) product.flashSaleStart = flashSaleStart;
     if (flashSaleEnd) product.flashSaleEnd = flashSaleEnd;
     if (flashSaleStock !== undefined) product.flashSaleStock = flashSaleStock;
 
-    // If ending the flash sale
     if (isFlashSale === false) {
       product.isFlashSale = false;
       product.flashSalePrice = undefined;
@@ -94,7 +80,10 @@ router.put("/:id/flash-sale", async (req, res) => {
 
     res.json({
       success: true,
-      message: isFlashSale === false ? "Flash sale ended" : "Flash sale created successfully",
+      message:
+        isFlashSale === false
+          ? "Flash sale ended"
+          : "Flash sale created successfully",
       data: product,
     });
   } catch (error) {
@@ -106,12 +95,56 @@ router.put("/:id/flash-sale", async (req, res) => {
   }
 });
 
-=======
->>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
+// ====================== WARRANTY ======================
+// PUT /api/products/:id/warranty
+router.put("/:id/warranty", async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    const { warranty, warrantyMonths } = req.body;
+
+    // Enable warranty
+    if (warranty === true || warranty === "true" || Number(warrantyMonths) > 0) {
+      product.warranty = true;
+      product.warrantyMonths = Number(warrantyMonths) || 12;
+    }
+
+    // Remove warranty
+    if (warranty === false || warranty === "false" || Number(warrantyMonths) === 0) {
+      product.warranty = false;
+      product.warrantyMonths = 0;
+    }
+
+    await product.save();
+
+    res.json({
+      success: true,
+      message:
+        product.warranty === false
+          ? "Warranty removed"
+          : "Warranty added successfully",
+      data: product,
+    });
+  } catch (error) {
+    console.error("Warranty error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
 // GET SINGLE PRODUCT
 router.get("/:id", getProductById);
 
-// UPDATE PRODUCT
+// UPDATE PRODUCT (also accepts warranty fields)
 router.put("/:id", upload.single("image"), updateProduct);
 
 // DELETE PRODUCT

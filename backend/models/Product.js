@@ -4,18 +4,18 @@ const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: String,
   category: String,
+  subcategory: String,
   price: { type: Number, required: true },
   wholesalePrice: Number,
   stock: { type: Number, default: 1 },
   minimumOrder: { type: Number, default: 1 },
-  type: { 
-    type: String, 
-    enum: ['retail', 'wholesale', 'both'], 
-    default: 'retail' 
+  type: {
+    type: String,
+    enum: ["retail", "wholesale", "both", "warehouse"],
+    default: "retail",
   },
   image: String,
-  seller: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-<<<<<<< HEAD
+  seller: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 
   // ====================== FLASH SALE FIELDS ======================
   isFlashSale: {
@@ -32,13 +32,22 @@ const productSchema = new mongoose.Schema({
     type: Date,
   },
   flashSaleStock: {
-    type: Number, // optional limited quantity for the flash sale
+    type: Number,
   },
   // ==============================================================
 
-=======
->>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
-  createdAt: { type: Date, default: Date.now }
+  // ====================== WARRANTY FIELDS ======================
+  warranty: {
+    type: Boolean,
+    default: false,
+  },
+  warrantyMonths: {
+    type: Number,
+    default: 0,
+  },
+  // ==============================================================
+
+  createdAt: { type: Date, default: Date.now },
 });
 
 module.exports = mongoose.model("Product", productSchema);

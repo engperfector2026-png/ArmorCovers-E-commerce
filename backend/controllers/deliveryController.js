@@ -1,5 +1,4 @@
 const Rider = require("../models/Rider");
-<<<<<<< HEAD
 const Order = require("../models/Order");
 const Delivery = require("../models/Delivery");
 
@@ -34,26 +33,10 @@ const registerRider = async (req, res) => {
       : "";
 
     const rider = await Rider.create({
-=======
-const User = require("../models/User");
-
-// Register Rider
-const registerRider = async (req, res) => {
-  try {
-    const { fullName, phone, bikePlate, subCounty } = req.body;
-    const userId = req.user.id;
-
-    const existing = await Rider.findOne({ user: userId });
-    if (existing) return res.status(400).json({ message: "Already registered" });
-
-    const rider = new Rider({
-      user: userId,
->>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
       fullName,
       phone,
       bikePlate,
       subCounty,
-<<<<<<< HEAD
       idCopy,
       license,
       passportPhoto,
@@ -83,21 +66,11 @@ const getAllRiders = async (req, res) => {
   try {
     const riders = await Rider.find().sort({ createdAt: -1 });
     res.status(200).json(riders);
-=======
-      idCopy: req.files?.idCopy ? req.files.idCopy[0].path : null,
-      license: req.files?.license ? req.files.license[0].path : null,
-      passportPhoto: req.files?.passportPhoto ? req.files.passportPhoto[0].path : null,
-    });
-
-    await rider.save();
-    res.status(201).json({ success: true, message: "Rider registered", rider });
->>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-<<<<<<< HEAD
 // ===================== APPROVE RIDER (Admin) =====================
 const approveRider = async (req, res) => {
   try {
@@ -116,20 +89,11 @@ const approveRider = async (req, res) => {
       message: "Rider approved successfully",
       rider,
     });
-=======
-// Get Rider Profile
-const getRiderProfile = async (req, res) => {
-  try {
-    const rider = await Rider.findOne({ user: req.params.id }).populate('user');
-    if (!rider) return res.status(404).json({ message: "Rider not found" });
-    res.json(rider);
->>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-<<<<<<< HEAD
 // ===================== GET AVAILABLE ORDERS =====================
 const getAvailableOrders = async (req, res) => {
   try {
@@ -362,9 +326,4 @@ module.exports = {
   updateDeliveryStatus,
   getRiderDashboard,
   getAllDeliveries,
-=======
-module.exports = {
-  registerRider,
-  getRiderProfile,
->>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
 };

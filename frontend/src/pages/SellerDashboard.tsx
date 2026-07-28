@@ -8,11 +8,11 @@ import {
   MessageSquare,
   Plus,
   Truck,
-  Eye,
   Edit,
-  Zap,          // Flash Sale icon
+  Zap,
   X,
-  Clock
+  Clock,
+  Shield
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
@@ -46,17 +46,25 @@ const StatCard = ({ title, value, trend, trendUp, icon: Icon }: any) => {
   );
 };
 
-const QuickActions = ({ onOpenFlashSale }: { onOpenFlashSale: () => void }) => {
+const QuickActions = ({
+  onOpenFlashSale,
+  onOpenWarranty,
+}: {
+  onOpenFlashSale: () => void;
+  onOpenWarranty: () => void;
+}) => {
   const actions = [
     { title: 'Add Product', icon: <Plus size={20} />, path: '/add-product' },
     { title: 'Edit Product', icon: <Edit size={20} />, path: '/my-products' },
     { title: 'Mark as Shipped', icon: <Truck size={20} />, path: '/my-orders' },
     { title: 'Create Flash Sale', icon: <Zap size={20} />, action: onOpenFlashSale },
+    { title: 'Add Warranty', icon: <Shield size={20} />, action: onOpenWarranty },
+    { title: 'Warranty Products', icon: <Shield size={20} />, path: '/warranty-products' },
   ];
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {actions.map((action) => (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      {actions.map((action) =>
         action.path ? (
           <Link
             key={action.title}
@@ -80,7 +88,7 @@ const QuickActions = ({ onOpenFlashSale }: { onOpenFlashSale: () => void }) => {
             <span className="text-sm font-medium text-gray-800">{action.title}</span>
           </button>
         )
-      ))}
+      )}
     </div>
   );
 };
@@ -97,6 +105,7 @@ const SellerDashboard = () => {
   const [seller, setSeller] = useState<any>(null);
   const [products, setProducts] = useState<any[]>([]);
   const [flashSales, setFlashSales] = useState<any[]>([]);
+  const [warrantyProducts, setWarrantyProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Flash Sale Modal
@@ -110,8 +119,34 @@ const SellerDashboard = () => {
   });
   const [submitting, setSubmitting] = useState(false);
 
+  // Warranty Modal
+  const [showWarrantyModal, setShowWarrantyModal] = useState(false);
+  const [warrantyForm, setWarrantyForm] = useState({
+    productId: '',
+    warrantyMonths: '12',
+  });
+  const [submittingWarranty, setSubmittingWarranty] = useState(false);
+
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
+
+  const refreshProducts = async () => {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const productsRes = await axios.get("http://localhost:5000/api/products", { headers });
+    const sellerProducts = (productsRes.data || []).filter(
+      (p: any) => p.seller === user._id || p.seller?._id === user._id
+    );
+    setProducts(sellerProducts);
+    setFlashSales(sellerProducts.filter((p: any) => p.isFlashSale));
+    setWarrantyProducts(
+      sellerProducts.filter(
+        (p: any) =>
+          p.warranty === true ||
+          (typeof p.warranty === "number" && p.warranty > 0) ||
+          (p.warrantyMonths && p.warrantyMonths > 0)
+      )
+    );
+  };
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -119,51 +154,53 @@ const SellerDashboard = () => {
         const user = JSON.parse(localStorage.getItem("user") || "{}");
         setSeller(user);
 
-        // Fetch seller products
         const productsRes = await axios.get("http://localhost:5000/api/products", { headers });
         const sellerProducts = (productsRes.data || []).filter(
           (p: any) => p.seller === user._id || p.seller?._id === user._id
         );
         setProducts(sellerProducts);
+        setFlashSales(sellerProducts.filter((p: any) => p.isFlashSale));
+        setWarrantyProducts(
+          sellerProducts.filter(
+            (p: any) =>
+              p.warranty === true ||
+              (typeof p.warranty === "number" && p.warranty > 0) ||
+              (p.warrantyMonths && p.warrantyMonths > 0)
+          )
+        );
 
-        // Flash sales = products that currently have isFlashSale = true
-        const activeFlash = sellerProducts.filter((p: any) => p.isFlashSale);
-        setFlashSales(activeFlash);
-
-        // Fetch seller orders
         let sellerOrders: any[] = [];
         try {
           const ordersRes = await axios.get("http://localhost:5000/api/orders/seller", { headers });
           sellerOrders = ordersRes.data || [];
-        } catch (err) {
+        } catch {
           console.log("Orders endpoint not ready yet");
         }
 
         setOrders(sellerOrders.slice(0, 4));
 
         setStats({
-          todayEarnings: { 
-            value: `KSh ${(sellerOrders.reduce((sum: number, o: any) => sum + (o.total || 0), 0)).toLocaleString()}`, 
-            trend: '+18% vs yesterday', 
-            trendUp: true 
+          todayEarnings: {
+            value: `KSh ${(sellerOrders.reduce((sum: number, o: any) => sum + (o.total || 0), 0)).toLocaleString()}`,
+            trend: '+18% vs yesterday',
+            trendUp: true,
           },
-          pendingOrders: { 
-            value: sellerOrders.filter((o: any) => o.status === 'Pending').length || 0, 
-            trend: 'Need attention', 
-            trendUp: false 
+          pendingOrders: {
+            value: sellerOrders.filter((o: any) => o.status === 'Pending').length || 0,
+            trend: 'Need attention',
+            trendUp: false,
           },
-          activeProducts: { 
-            value: sellerProducts.length, 
-            trend: `${sellerProducts.filter((p: any) => p.stock < 5).length} low stock`, 
-            trendUp: true 
+          activeProducts: {
+            value: sellerProducts.length,
+            trend: `${sellerProducts.filter((p: any) => p.stock < 5).length} low stock`,
+            trendUp: true,
           },
-          storeRating: { 
-            value: '4.8', 
-            trend: '128 reviews', 
-            trendUp: true 
+          storeRating: {
+            value: '4.8',
+            trend: '128 reviews',
+            trendUp: true,
           },
         });
-
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -204,20 +241,42 @@ const SellerDashboard = () => {
         flashSaleEnd: '',
         flashSaleStock: '',
       });
-
-      // Refresh products
-      const productsRes = await axios.get("http://localhost:5000/api/products", { headers });
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-      const sellerProducts = (productsRes.data || []).filter(
-        (p: any) => p.seller === user._id || p.seller?._id === user._id
-      );
-      setProducts(sellerProducts);
-      setFlashSales(sellerProducts.filter((p: any) => p.isFlashSale));
+      await refreshProducts();
     } catch (err: any) {
       console.error(err);
-      alert(err.response?.data?.message || "Failed to create flash sale. Make sure the backend endpoint exists.");
+      alert(err.response?.data?.message || "Failed to create flash sale.");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleAddWarranty = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!warrantyForm.productId || !warrantyForm.warrantyMonths) {
+      alert("Please select a product and warranty period");
+      return;
+    }
+
+    try {
+      setSubmittingWarranty(true);
+      await axios.put(
+        `http://localhost:5000/api/products/${warrantyForm.productId}/warranty`,
+        {
+          warranty: true,
+          warrantyMonths: Number(warrantyForm.warrantyMonths),
+        },
+        { headers }
+      );
+
+      alert("Warranty added successfully!");
+      setShowWarrantyModal(false);
+      setWarrantyForm({ productId: '', warrantyMonths: '12' });
+      await refreshProducts();
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || "Failed to add warranty.");
+    } finally {
+      setSubmittingWarranty(false);
     }
   };
 
@@ -230,8 +289,22 @@ const SellerDashboard = () => {
         { headers }
       );
       setFlashSales((prev) => prev.filter((p) => p._id !== productId));
-    } catch (err) {
+    } catch {
       alert("Failed to end flash sale");
+    }
+  };
+
+  const removeWarranty = async (productId: string) => {
+    if (!window.confirm("Remove warranty from this product?")) return;
+    try {
+      await axios.put(
+        `http://localhost:5000/api/products/${productId}/warranty`,
+        { warranty: false, warrantyMonths: 0 },
+        { headers }
+      );
+      setWarrantyProducts((prev) => prev.filter((p) => p._id !== productId));
+    } catch {
+      alert("Failed to remove warranty");
     }
   };
 
@@ -263,9 +336,9 @@ const SellerDashboard = () => {
           <div className="relative z-10 flex items-center gap-6">
             <div className="w-20 h-20 rounded-full bg-white/20 border-4 border-white/30 overflow-hidden flex-shrink-0">
               {seller?.photo || seller?.avatar ? (
-                <img 
-                  src={seller.photo || seller.avatar} 
-                  alt={seller.name} 
+                <img
+                  src={seller.photo || seller.avatar}
+                  alt={seller.name}
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -297,7 +370,10 @@ const SellerDashboard = () => {
         </div>
 
         {/* Quick Actions */}
-        <QuickActions onOpenFlashSale={() => setShowFlashModal(true)} />
+        <QuickActions
+          onOpenFlashSale={() => setShowFlashModal(true)}
+          onOpenWarranty={() => setShowWarrantyModal(true)}
+        />
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -375,6 +451,63 @@ const SellerDashboard = () => {
                       className="text-xs px-2.5 py-1 bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-200 transition"
                     >
                       End
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ==================== WARRANTY SECTION ==================== */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <Shield className="text-orange-500" size={22} />
+              <h3 className="text-lg font-semibold text-gray-900">Warranty Products</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/warranty-products"
+                className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+              >
+                View All
+              </Link>
+              <button
+                onClick={() => setShowWarrantyModal(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl text-sm font-medium hover:bg-orange-600 transition"
+              >
+                <Plus size={16} /> Add Warranty
+              </button>
+            </div>
+          </div>
+
+          {warrantyProducts.length === 0 ? (
+            <div className="text-center py-10 text-gray-500">
+              <Shield size={40} className="mx-auto mb-3 text-gray-300" />
+              <p>No products with warranty yet</p>
+              <p className="text-sm mt-1">Add warranty to build buyer trust!</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {warrantyProducts.map((product) => (
+                <div key={product._id} className="border border-orange-100 bg-orange-50 rounded-xl p-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-medium text-gray-900">{product.name}</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Price: KSh {product.price?.toLocaleString()}
+                      </p>
+                      <p className="text-lg font-bold text-orange-600 mt-1 flex items-center gap-1">
+                        <Shield size={16} />
+                        {product.warrantyMonths || 12} Months Warranty
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => removeWarranty(product._id)}
+                      className="text-xs px-2.5 py-1 bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-200 transition"
+                    >
+                      Remove
                     </button>
                   </div>
                 </div>
@@ -530,7 +663,6 @@ const SellerDashboard = () => {
             </div>
 
             <form onSubmit={handleCreateFlashSale} className="space-y-4">
-              {/* Select Product */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Select Product *</label>
                 <select
@@ -548,7 +680,6 @@ const SellerDashboard = () => {
                 </select>
               </div>
 
-              {/* Flash Price */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Flash Sale Price (KSh) *</label>
                 <input
@@ -562,7 +693,6 @@ const SellerDashboard = () => {
                 />
               </div>
 
-              {/* Start & End */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Start Date & Time *</label>
@@ -586,7 +716,6 @@ const SellerDashboard = () => {
                 </div>
               </div>
 
-              {/* Optional limited stock */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Limited Stock (optional)
@@ -607,6 +736,75 @@ const SellerDashboard = () => {
                 className="w-full bg-orange-500 text-white py-3 rounded-xl font-semibold hover:bg-orange-600 transition disabled:opacity-60"
               >
                 {submitting ? "Creating..." : "Create Flash Sale"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== ADD WARRANTY MODAL ==================== */}
+      {showWarrantyModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg p-6 relative">
+            <button
+              onClick={() => setShowWarrantyModal(false)}
+              className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="flex items-center gap-2 mb-6">
+              <Shield className="text-orange-500" size={24} />
+              <h2 className="text-xl font-bold text-gray-900">Add Warranty</h2>
+            </div>
+
+            <form onSubmit={handleAddWarranty} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Select Product *</label>
+                <select
+                  value={warrantyForm.productId}
+                  onChange={(e) => setWarrantyForm({ ...warrantyForm, productId: e.target.value })}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  required
+                >
+                  <option value="">Choose a product</option>
+                  {products.map((p) => (
+                    <option key={p._id} value={p._id}>
+                      {p.name} — KSh {p.price?.toLocaleString()}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Warranty Period *</label>
+                <select
+                  value={warrantyForm.warrantyMonths}
+                  onChange={(e) => setWarrantyForm({ ...warrantyForm, warrantyMonths: e.target.value })}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  required
+                >
+                  <option value="3">3 Months</option>
+                  <option value="6">6 Months</option>
+                  <option value="12">12 Months</option>
+                  <option value="24">24 Months</option>
+                </select>
+              </div>
+
+              <p className="text-xs text-gray-500">
+                Products with warranty will appear on the{" "}
+                <Link to="/warranty-products" className="text-orange-600 hover:underline">
+                  Warranty Products
+                </Link>{" "}
+                page for buyers.
+              </p>
+
+              <button
+                type="submit"
+                disabled={submittingWarranty}
+                className="w-full bg-orange-500 text-white py-3 rounded-xl font-semibold hover:bg-orange-600 transition disabled:opacity-60"
+              >
+                {submittingWarranty ? "Saving..." : "Add Warranty"}
               </button>
             </form>
           </div>

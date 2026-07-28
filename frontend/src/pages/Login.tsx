@@ -17,15 +17,9 @@ const Login = () => {
 
     if (token && user?.role) {
       const redirectMap: { [key: string]: string } = {
-<<<<<<< HEAD
         admin: "/admin-dashboard",
         seller: "/seller-dashboard",
         vendor: "/seller-dashboard",
-=======
-        admin: "/admin/dashboard",
-        seller: "/vendor/dashboard",
-        vendor: "/vendor/dashboard",
->>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
         buyer: "/buyer-dashboard",
       };
       const redirectPath = redirectMap[user.role] || "/";
@@ -52,15 +46,9 @@ const Login = () => {
 
       // Redirect based on role
       const redirectMap: { [key: string]: string } = {
-<<<<<<< HEAD
         admin: "/admin-dashboard",
         seller: "/seller-dashboard",
         vendor: "/seller-dashboard",
-=======
-        admin: "/admin/dashboard",
-        seller: "/vendor/dashboard",
-        vendor: "/vendor/dashboard",
->>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
         buyer: "/buyer-dashboard",
       };
       const redirectPath = redirectMap[res.data.user.role] || "/";

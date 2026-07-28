@@ -10,15 +10,11 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-<<<<<<< HEAD
 // ====================== SOCKET.IO ======================
-=======
->>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
 const io = new Server(server, {
   cors: {
     origin: ["http://localhost:3000", "http://localhost:5173", "http://localhost:5174"],
     methods: ["GET", "POST"],
-<<<<<<< HEAD
     credentials: true,
   },
 });
@@ -30,17 +26,6 @@ app.use(
     credentials: true,
   })
 );
-=======
-    credentials: true
-  }
-});
-
-// ====================== MIDDLEWARE ======================
-app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:5173", "http://localhost:5174"],
-  credentials: true
-}));
->>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -52,25 +37,18 @@ app.get("/test-db", async (req, res) => {
     const User = require("./models/User");
     const Product = require("./models/Product");
     const Rider = require("./models/Rider");
-<<<<<<< HEAD
     const Delivery = require("./models/Delivery");
     const Return = require("./models/Return");
-=======
->>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
 
     const usersCount = await User.countDocuments();
     const productsCount = await Product.countDocuments().catch(() => 0);
     const ridersCount = await Rider.countDocuments().catch(() => 0);
-<<<<<<< HEAD
     const deliveriesCount = await Delivery.countDocuments().catch(() => 0);
     const returnsCount = await Return.countDocuments().catch(() => 0);
-=======
->>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
 
     res.json({
       success: true,
       message: "Database connection & query test successful!",
-<<<<<<< HEAD
       stats: {
         totalUsers: usersCount,
         totalProducts: productsCount,
@@ -84,33 +62,18 @@ app.get("/test-db", async (req, res) => {
       success: false,
       message: error.message,
     });
-=======
-      stats: { 
-        totalUsers: usersCount, 
-        totalProducts: productsCount,
-        totalRiders: ridersCount 
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
->>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
   }
 });
 
 // ====================== BASIC ROUTE ======================
-<<<<<<< HEAD
 app.get("/", (req, res) => {
   res.send("✅ ARMORCOVERS API Running with Rider System + Returns");
 });
-=======
-app.get("/", (req, res) => res.send("✅ ARMORCOVERS API Running with Rider System"));
->>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
 
 // ====================== MAIN ROUTES ======================
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/products", require("./routes/productRoutes"));
 app.use("/api/admin", require("./routes/adminRoutes"));
-<<<<<<< HEAD
 app.use("/api/orders", require("./routes/orderRoutes"));
 app.use("/api/mpesa", require("./routes/mpesaRoutes"));
 
@@ -127,13 +90,6 @@ try {
 }
 
 // ====================== CHAT ROUTES ======================
-=======
-
-// ====================== RIDER ROUTES ======================
-app.use("/api/delivery", require("./routes/deliveryRoutes"));
-
-// ====================== CHAT ROUTE ======================
->>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
 app.use("/api/chat", require("./routes/chatRoutes"));
 
 // ====================== VERIFICATION ROUTES ======================
@@ -145,11 +101,7 @@ try {
   console.log("⚠️ Verification routes not found yet");
 }
 
-<<<<<<< HEAD
 // ====================== SOCKET.IO EVENTS ======================
-=======
-// ====================== SOCKET.IO ======================
->>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
 io.on("connection", (socket) => {
   console.log("🟢 User connected:", socket.id);
 
@@ -162,15 +114,12 @@ io.on("connection", (socket) => {
     io.to(data.roomId).emit("receiveMessage", data);
   });
 
-<<<<<<< HEAD
   // Optional: Real-time delivery status updates
   socket.on("joinDeliveryRoom", (deliveryId) => {
     socket.join(`delivery_${deliveryId}`);
     console.log(`User joined delivery room: delivery_${deliveryId}`);
   });
 
-=======
->>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
   socket.on("disconnect", () => {
     console.log("🔴 User disconnected:", socket.id);
   });
@@ -188,18 +137,12 @@ const startServer = async () => {
     server.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
       console.log(`🔍 Test DB: http://localhost:${PORT}/test-db`);
-<<<<<<< HEAD
       console.log(`🛵 Rider Registration: http://localhost:${PORT}/api/delivery/register`);
       console.log(`📦 Returns: http://localhost:${PORT}/api/returns`);
     });
   } catch (error) {
     console.error("❌ Server Startup Failed:", error.message);
     process.exit(1);
-=======
-    });
-  } catch (error) {
-    console.error("❌ Server Startup Failed:", error.message);
->>>>>>> cbfa4a1c5f0c8a894f3e86903e97080616510176
   }
 };
 

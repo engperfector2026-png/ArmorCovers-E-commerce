@@ -15,50 +15,173 @@ function EditProduct() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [unauthorized, setUnauthorized] = useState(false);
+
+  const getCurrentUserId = (): string | null => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      return user._id || user.id || user.userId || null;
+    } catch {
+      return null;
+    }
+  };
+
+  const getToken = (): string | null => {
+    // Support common key names
+    return (
+      localStorage.getItem("token") ||
+      localStorage.getItem("accessToken") ||
+      localStorage.getItem("authToken") ||
+      null
+    );
+  };
+
+  const getProductSellerId = (data: any): string | null => {
+    if (!data?.seller) return null;
+    if (typeof data.seller === "string") return data.seller;
+    return data.seller._id || data.seller.id || null;
+  };
 
   useEffect(() => {
     const fetchProduct = async () => {
+      const currentUserId = getCurrentUserId();
+      const token = getToken();
+
+      if (!currentUserId || !token) {
+        alert("Please log in to edit products.");
+        navigate("/login");
+        return;
+      }
+
       try {
-        const res = await axios.get(`http://localhost:5000/api/products/${id}`);
+        const res = await axios.get(
+          `http://localhost:5000/api/products/${id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        const productSellerId = getProductSellerId(res.data);
+
+        if (
+          !productSellerId ||
+          productSellerId.toString() !== currentUserId.toString()
+        ) {
+          setUnauthorized(true);
+          setLoading(false);
+          return;
+        }
+
         setProduct({
-          name: res.data.name,
-          description: res.data.description,
-          category: res.data.category,
-          price: res.data.price,
-          stock: res.data.stock,
+          name: res.data.name || "",
+          description: res.data.description || "",
+          category: res.data.category || "",
+          price: res.data.price ?? "",
+          stock: res.data.stock ?? "",
         });
       } catch (error) {
         console.error(error);
         alert("Failed to load product");
+        navigate("/my-products");
       } finally {
         setLoading(false);
       }
     };
 
     fetchProduct();
-  }, [id]);
+  }, [id, navigate]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     setProduct({ ...product, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const currentUserId = getCurrentUserId();
+    const token = getToken();
+
+    if (!currentUserId || !token) {
+      alert("Please log in to edit products.");
+      navigate("/login");
+      return;
+    }
+
     setSaving(true);
 
     try {
-      await axios.put(`http://localhost:5000/api/products/${id}`, product);
+      await axios.put(
+        `http://localhost:5000/api/products/${id}`,
+        {
+          name: product.name,
+          description: product.description,
+          category: product.category,
+          price: product.price,
+          stock: product.stock,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
       alert("✅ Product updated successfully!");
       navigate("/my-products");
-    } catch (error) {
-      console.error(error);
-      alert("Failed to update product");
+    } catch (error: any) {
+      console.error("Update error:", error.response?.data || error);
+      const status = error.response?.status;
+      const msg =
+        error.response?.data?.message || "Failed to update product";
+
+      if (status === 401) {
+        alert(
+          "Not authorized (401). Your login token is missing or invalid.\n\nPlease log out and log in again."
+        );
+        navigate("/login");
+      } else if (status === 403) {
+        alert("You can only edit your own products.");
+      } else {
+        alert(msg);
+      }
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <div className="p-10 text-center">Loading product...</div>;
+  if (loading) {
+    return (
+      <div className="p-10 text-center text-slate-600">Loading product...</div>
+    );
+  }
+
+  if (unauthorized) {
+    return (
+      <div className="bg-slate-100 min-h-screen flex items-center justify-center px-6">
+        <div className="bg-white rounded-3xl shadow p-10 max-w-md text-center">
+          <div className="text-5xl mb-4">🔒</div>
+          <h2 className="text-2xl font-bold text-slate-800 mb-2">
+            Access Denied
+          </h2>
+          <p className="text-slate-500 mb-6 text-sm">
+            You can only edit products that you own. This product belongs to
+            another seller.
+          </p>
+          <button
+            onClick={() => navigate("/my-products")}
+            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-semibold transition"
+          >
+            Back to My Products
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-slate-100 min-h-screen py-10 px-6">

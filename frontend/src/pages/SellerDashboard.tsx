@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { 
-  DollarSign, 
-  ShoppingBag, 
-  Package, 
-  Star, 
+import { useEffect, useState, useCallback } from "react";
+import {
+  DollarSign,
+  ShoppingBag,
+  Package,
+  Star,
   TrendingUp,
   MessageSquare,
   Plus,
@@ -12,39 +12,38 @@ import {
   Zap,
   X,
   Clock,
-  Shield
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
-import axios from 'axios';
+  Shield,
+  LogOut,
+} from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import API from "../api/axios";
 
 const salesChartData = [
-  { name: 'Mon', sales: 4000, orders: 24 },
-  { name: 'Tue', sales: 3000, orders: 18 },
-  { name: 'Wed', sales: 5000, orders: 32 },
-  { name: 'Thu', sales: 2780, orders: 15 },
-  { name: 'Fri', sales: 1890, orders: 12 },
-  { name: 'Sat', sales: 2390, orders: 20 },
-  { name: 'Sun', sales: 3490, orders: 28 },
+  { name: "Mon", sales: 4000, orders: 24 },
+  { name: "Tue", sales: 3000, orders: 18 },
+  { name: "Wed", sales: 5000, orders: 32 },
+  { name: "Thu", sales: 2780, orders: 15 },
+  { name: "Fri", sales: 1890, orders: 12 },
+  { name: "Sat", sales: 2390, orders: 20 },
+  { name: "Sun", sales: 3490, orders: 28 },
 ];
 
-const StatCard = ({ title, value, trend, trendUp, icon: Icon }: any) => {
-  return (
-    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm text-gray-500">{title}</p>
-          <p className="text-2xl font-bold mt-1 text-gray-900">{value}</p>
-          <p className={`text-sm mt-2 ${trendUp ? 'text-emerald-600' : 'text-gray-500'}`}>
-            {trend}
-          </p>
-        </div>
-        <div className="p-3 rounded-xl bg-orange-100 text-orange-600">
-          <Icon size={22} />
-        </div>
+const StatCard = ({ title, value, trend, trendUp, icon: Icon }: any) => (
+  <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+    <div className="flex items-start justify-between">
+      <div>
+        <p className="text-sm text-gray-500">{title}</p>
+        <p className="text-2xl font-bold mt-1 text-gray-900">{value}</p>
+        <p className={`text-sm mt-2 ${trendUp ? "text-emerald-600" : "text-gray-500"}`}>
+          {trend}
+        </p>
+      </div>
+      <div className="p-3 rounded-xl bg-orange-100 text-orange-600">
+        <Icon size={22} />
       </div>
     </div>
-  );
-};
+  </div>
+);
 
 const QuickActions = ({
   onOpenFlashSale,
@@ -54,12 +53,12 @@ const QuickActions = ({
   onOpenWarranty: () => void;
 }) => {
   const actions = [
-    { title: 'Add Product', icon: <Plus size={20} />, path: '/add-product' },
-    { title: 'Edit Product', icon: <Edit size={20} />, path: '/my-products' },
-    { title: 'Mark as Shipped', icon: <Truck size={20} />, path: '/my-orders' },
-    { title: 'Create Flash Sale', icon: <Zap size={20} />, action: onOpenFlashSale },
-    { title: 'Add Warranty', icon: <Shield size={20} />, action: onOpenWarranty },
-    { title: 'Warranty Products', icon: <Shield size={20} />, path: '/warranty-products' },
+    { title: "Add Product", icon: <Plus size={20} />, path: "/add-product" },
+    { title: "Edit Product", icon: <Edit size={20} />, path: "/my-products" },
+    { title: "Mark as Shipped", icon: <Truck size={20} />, path: "/my-orders" },
+    { title: "Create Flash Sale", icon: <Zap size={20} />, action: onOpenFlashSale },
+    { title: "Add Warranty", icon: <Shield size={20} />, action: onOpenWarranty },
+    { title: "Warranty Products", icon: <Shield size={20} />, path: "/warranty-products" },
   ];
 
   return (
@@ -93,12 +92,31 @@ const QuickActions = ({
   );
 };
 
+const getSellerId = () => {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const id = user._id || user.id || user.userId || "";
+  console.log("🔑 Seller ID from localStorage:", id, user);
+  return String(id);
+};
+
+const matchesSeller = (product: any, sellerId: string) => {
+  if (!sellerId) return false;
+  const sid =
+    product.seller?._id ||
+    product.seller?.id ||
+    product.seller ||
+    null;
+  if (!sid) return false;
+  return String(sid) === String(sellerId);
+};
+
 const SellerDashboard = () => {
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
-    todayEarnings: { value: 'KSh 0', trend: 'Loading...', trendUp: true },
-    pendingOrders: { value: 0, trend: 'Need attention', trendUp: false },
-    activeProducts: { value: 0, trend: 'Loading...', trendUp: true },
-    storeRating: { value: '0.0', trend: '0 reviews', trendUp: true },
+    todayEarnings: { value: "KSh 0", trend: "Loading...", trendUp: true },
+    pendingOrders: { value: 0, trend: "Need attention", trendUp: false },
+    activeProducts: { value: 0, trend: "Loading...", trendUp: true },
+    storeRating: { value: "0.0", trend: "0 reviews", trendUp: true },
   });
 
   const [orders, setOrders] = useState<any[]>([]);
@@ -108,36 +126,66 @@ const SellerDashboard = () => {
   const [warrantyProducts, setWarrantyProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Flash Sale Modal
   const [showFlashModal, setShowFlashModal] = useState(false);
   const [flashForm, setFlashForm] = useState({
-    productId: '',
-    flashSalePrice: '',
-    flashSaleStart: '',
-    flashSaleEnd: '',
-    flashSaleStock: '',
+    productId: "",
+    flashSalePrice: "",
+    flashSaleStart: "",
+    flashSaleEnd: "",
+    flashSaleStock: "",
   });
   const [submitting, setSubmitting] = useState(false);
 
-  // Warranty Modal
   const [showWarrantyModal, setShowWarrantyModal] = useState(false);
   const [warrantyForm, setWarrantyForm] = useState({
-    productId: '',
-    warrantyMonths: '12',
+    productId: "",
+    warrantyMonths: "12",
   });
   const [submittingWarranty, setSubmittingWarranty] = useState(false);
 
-  const token = localStorage.getItem("token");
-  const headers = { Authorization: `Bearer ${token}` };
+  const loadSellerProducts = useCallback(async () => {
+    const sellerId = getSellerId();
+    if (!sellerId) {
+      console.warn("⚠️ No seller ID found in localStorage");
+      return [];
+    }
 
-  const refreshProducts = async () => {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    const productsRes = await axios.get("http://localhost:5000/api/products", { headers });
-    const sellerProducts = (productsRes.data || []).filter(
-      (p: any) => p.seller === user._id || p.seller?._id === user._id
-    );
+    // 1) Seller-specific endpoint
+    try {
+      const res = await API.get(`/products/seller/${sellerId}`);
+      if (Array.isArray(res.data) && res.data.length > 0) {
+        console.log(`✅ Seller endpoint returned ${res.data.length} products`);
+        return res.data;
+      }
+    } catch (err) {
+      console.log("Seller endpoint failed, trying filter fallback...");
+    }
+
+    // 2) Fetch all + filter by seller
+    try {
+      const res = await API.get("/products");
+      const all = Array.isArray(res.data) ? res.data : [];
+      console.log(`📦 Total products in DB: ${all.length}`);
+      console.log(
+        "Sample seller fields:",
+        all.slice(0, 3).map((p: any) => ({ name: p.name, seller: p.seller }))
+      );
+
+      const matched = all.filter((p: any) => matchesSeller(p, sellerId));
+      console.log(`✅ Matched ${matched.length} products for seller ${sellerId}`);
+      return matched;
+    } catch (err) {
+      console.error("Failed to load products:", err);
+      return [];
+    }
+  }, []);
+
+  const refreshProducts = useCallback(async () => {
+    const sellerProducts = await loadSellerProducts();
     setProducts(sellerProducts);
-    setFlashSales(sellerProducts.filter((p: any) => p.isFlashSale));
+    setFlashSales(
+      sellerProducts.filter((p: any) => p.isFlashSale && p.flashSalePrice)
+    );
     setWarrantyProducts(
       sellerProducts.filter(
         (p: any) =>
@@ -146,58 +194,78 @@ const SellerDashboard = () => {
           (p.warrantyMonths && p.warrantyMonths > 0)
       )
     );
-  };
+
+    setStats((prev) => ({
+      ...prev,
+      activeProducts: {
+        value: sellerProducts.length,
+        trend: `${sellerProducts.filter((p: any) => (p.stock || 0) < 5).length} low stock`,
+        trendUp: true,
+      },
+    }));
+
+    return sellerProducts;
+  }, [loadSellerProducts]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         const user = JSON.parse(localStorage.getItem("user") || "{}");
+        const sellerId = getSellerId();
+
+        if (!sellerId) {
+          navigate("/login");
+          return;
+        }
+
         setSeller(user);
 
-        const productsRes = await axios.get("http://localhost:5000/api/products", { headers });
-        const sellerProducts = (productsRes.data || []).filter(
-          (p: any) => p.seller === user._id || p.seller?._id === user._id
-        );
-        setProducts(sellerProducts);
-        setFlashSales(sellerProducts.filter((p: any) => p.isFlashSale));
-        setWarrantyProducts(
-          sellerProducts.filter(
-            (p: any) =>
-              p.warranty === true ||
-              (typeof p.warranty === "number" && p.warranty > 0) ||
-              (p.warrantyMonths && p.warrantyMonths > 0)
-          )
-        );
+        const sellerProducts = await refreshProducts();
 
         let sellerOrders: any[] = [];
         try {
-          const ordersRes = await axios.get("http://localhost:5000/api/orders/seller", { headers });
-          sellerOrders = ordersRes.data || [];
+          const ordersRes = await API.get(`/orders/seller/${sellerId}`);
+          sellerOrders = Array.isArray(ordersRes.data) ? ordersRes.data : [];
         } catch {
-          console.log("Orders endpoint not ready yet");
+          try {
+            const ordersRes = await API.get("/orders/seller");
+            sellerOrders = Array.isArray(ordersRes.data) ? ordersRes.data : [];
+          } catch {
+            console.log("Orders endpoint not ready yet");
+          }
         }
 
         setOrders(sellerOrders.slice(0, 4));
 
+        const totalEarnings = sellerOrders.reduce(
+          (sum: number, o: any) =>
+            sum + (o.totalAmount || o.total || o.amount || 0),
+          0
+        );
+
         setStats({
           todayEarnings: {
-            value: `KSh ${(sellerOrders.reduce((sum: number, o: any) => sum + (o.total || 0), 0)).toLocaleString()}`,
-            trend: '+18% vs yesterday',
+            value: `KSh ${totalEarnings.toLocaleString()}`,
+            trend: `${sellerOrders.length} total orders`,
             trendUp: true,
           },
           pendingOrders: {
-            value: sellerOrders.filter((o: any) => o.status === 'Pending').length || 0,
-            trend: 'Need attention',
+            value: sellerOrders.filter((o: any) =>
+              ["Pending", "Processing"].includes(o.status)
+            ).length,
+            trend: "Need attention",
             trendUp: false,
           },
           activeProducts: {
             value: sellerProducts.length,
-            trend: `${sellerProducts.filter((p: any) => p.stock < 5).length} low stock`,
+            trend: `${
+              sellerProducts.filter((p: any) => (p.stock || 0) < 5).length
+            } low stock`,
             trendUp: true,
           },
           storeRating: {
-            value: '4.8',
-            trend: '128 reviews',
+            value: "4.8",
+            trend: "Based on reviews",
             trendUp: true,
           },
         });
@@ -209,37 +277,59 @@ const SellerDashboard = () => {
     };
 
     fetchDashboardData();
-  }, []);
+
+    // Reload when user comes back from Add Product page
+    const onFocus = () => {
+      refreshProducts();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [navigate, refreshProducts]);
 
   const handleCreateFlashSale = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!flashForm.productId || !flashForm.flashSalePrice || !flashForm.flashSaleStart || !flashForm.flashSaleEnd) {
+    if (
+      !flashForm.productId ||
+      !flashForm.flashSalePrice ||
+      !flashForm.flashSaleStart ||
+      !flashForm.flashSaleEnd
+    ) {
       alert("Please fill all required fields");
       return;
     }
 
     try {
       setSubmitting(true);
-      await axios.put(
-        `http://localhost:5000/api/products/${flashForm.productId}/flash-sale`,
-        {
+      try {
+        await API.put(`/products/${flashForm.productId}/flash-sale`, {
           isFlashSale: true,
           flashSalePrice: Number(flashForm.flashSalePrice),
           flashSaleStart: flashForm.flashSaleStart,
           flashSaleEnd: flashForm.flashSaleEnd,
-          flashSaleStock: flashForm.flashSaleStock ? Number(flashForm.flashSaleStock) : undefined,
-        },
-        { headers }
-      );
+          flashSaleStock: flashForm.flashSaleStock
+            ? Number(flashForm.flashSaleStock)
+            : undefined,
+        });
+      } catch {
+        await API.put(`/products/${flashForm.productId}`, {
+          isFlashSale: true,
+          flashSalePrice: Number(flashForm.flashSalePrice),
+          flashSaleStart: flashForm.flashSaleStart,
+          flashSaleEnd: flashForm.flashSaleEnd,
+          flashSaleStock: flashForm.flashSaleStock
+            ? Number(flashForm.flashSaleStock)
+            : undefined,
+        });
+      }
 
-      alert("Flash Sale created successfully!");
+      alert("✅ Flash Sale created successfully!");
       setShowFlashModal(false);
       setFlashForm({
-        productId: '',
-        flashSalePrice: '',
-        flashSaleStart: '',
-        flashSaleEnd: '',
-        flashSaleStock: '',
+        productId: "",
+        flashSalePrice: "",
+        flashSaleStart: "",
+        flashSaleEnd: "",
+        flashSaleStock: "",
       });
       await refreshProducts();
     } catch (err: any) {
@@ -259,18 +349,21 @@ const SellerDashboard = () => {
 
     try {
       setSubmittingWarranty(true);
-      await axios.put(
-        `http://localhost:5000/api/products/${warrantyForm.productId}/warranty`,
-        {
+      try {
+        await API.put(`/products/${warrantyForm.productId}/warranty`, {
           warranty: true,
           warrantyMonths: Number(warrantyForm.warrantyMonths),
-        },
-        { headers }
-      );
+        });
+      } catch {
+        await API.put(`/products/${warrantyForm.productId}`, {
+          warranty: true,
+          warrantyMonths: Number(warrantyForm.warrantyMonths),
+        });
+      }
 
-      alert("Warranty added successfully!");
+      alert("✅ Warranty added successfully!");
       setShowWarrantyModal(false);
-      setWarrantyForm({ productId: '', warrantyMonths: '12' });
+      setWarrantyForm({ productId: "", warrantyMonths: "12" });
       await refreshProducts();
     } catch (err: any) {
       console.error(err);
@@ -283,12 +376,15 @@ const SellerDashboard = () => {
   const endFlashSale = async (productId: string) => {
     if (!window.confirm("End this flash sale?")) return;
     try {
-      await axios.put(
-        `http://localhost:5000/api/products/${productId}/flash-sale`,
-        { isFlashSale: false },
-        { headers }
-      );
-      setFlashSales((prev) => prev.filter((p) => p._id !== productId));
+      try {
+        await API.put(`/products/${productId}/flash-sale`, { isFlashSale: false });
+      } catch {
+        await API.put(`/products/${productId}`, {
+          isFlashSale: false,
+          flashSalePrice: null,
+        });
+      }
+      await refreshProducts();
     } catch {
       alert("Failed to end flash sale");
     }
@@ -297,26 +393,38 @@ const SellerDashboard = () => {
   const removeWarranty = async (productId: string) => {
     if (!window.confirm("Remove warranty from this product?")) return;
     try {
-      await axios.put(
-        `http://localhost:5000/api/products/${productId}/warranty`,
-        { warranty: false, warrantyMonths: 0 },
-        { headers }
-      );
-      setWarrantyProducts((prev) => prev.filter((p) => p._id !== productId));
+      try {
+        await API.put(`/products/${productId}/warranty`, {
+          warranty: false,
+          warrantyMonths: 0,
+        });
+      } catch {
+        await API.put(`/products/${productId}`, {
+          warranty: false,
+          warrantyMonths: 0,
+        });
+      }
+      await refreshProducts();
     } catch {
       alert("Failed to remove warranty");
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
+
   const getStatusColor = (status: string): string => {
     const colors: any = {
-      Delivered: 'bg-emerald-100 text-emerald-700',
-      Processing: 'bg-blue-100 text-blue-700',
-      Shipped: 'bg-amber-100 text-amber-700',
-      Pending: 'bg-gray-100 text-gray-700',
-      Cancelled: 'bg-rose-100 text-rose-700',
+      Delivered: "bg-emerald-100 text-emerald-700",
+      Processing: "bg-blue-100 text-blue-700",
+      Shipped: "bg-amber-100 text-amber-700",
+      Pending: "bg-gray-100 text-gray-700",
+      Cancelled: "bg-rose-100 text-rose-700",
     };
-    return colors[status] || 'bg-gray-100 text-gray-700';
+    return colors[status] || "bg-gray-100 text-gray-700";
   };
 
   if (loading) {
@@ -330,55 +438,69 @@ const SellerDashboard = () => {
   return (
     <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
-
         {/* Welcome Banner */}
         <div className="bg-gradient-to-r from-orange-500 to-red-500 rounded-2xl p-8 text-white relative overflow-hidden">
-          <div className="relative z-10 flex items-center gap-6">
-            <div className="w-20 h-20 rounded-full bg-white/20 border-4 border-white/30 overflow-hidden flex-shrink-0">
-              {seller?.photo || seller?.avatar ? (
-                <img
-                  src={seller.photo || seller.avatar}
-                  alt={seller.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-3xl font-bold">
-                  {seller?.name?.charAt(0)?.toUpperCase() || "S"}
+          <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <div className="flex items-center gap-6">
+              <div className="w-20 h-20 rounded-full bg-white/20 border-4 border-white/30 overflow-hidden flex-shrink-0">
+                {seller?.photo || seller?.avatar ? (
+                  <img
+                    src={seller.photo || seller.avatar}
+                    alt={seller.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-3xl font-bold">
+                    {seller?.name?.charAt(0)?.toUpperCase() || "S"}
+                  </div>
+                )}
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold mb-1">
+                  Good Morning, {seller?.name || "Seller"}!
+                </h1>
+                <p className="text-orange-100 text-lg font-medium">ArmorCovers Store</p>
+                <p className="text-orange-100 mt-1">
+                  You have {stats.pendingOrders.value} orders waiting •{" "}
+                  {products.length} products
+                </p>
+                <div className="flex gap-3 mt-4">
+                  <Link
+                    to="/my-orders"
+                    className="inline-block bg-white text-orange-600 px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-orange-50 transition-colors"
+                  >
+                    View Orders
+                  </Link>
+                  <button
+                    onClick={() => refreshProducts()}
+                    className="inline-block bg-white/20 hover:bg-white/30 px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                  >
+                    Refresh Products
+                  </button>
                 </div>
-              )}
+              </div>
             </div>
-
-            <div>
-              <h1 className="text-2xl font-bold mb-1">
-                Good Morning, {seller?.name || "Seller"}!
-              </h1>
-              <p className="text-orange-100 text-lg font-medium">ArmorCovers Store</p>
-              <p className="text-orange-100 mt-1">
-                You have {stats.pendingOrders.value} new orders waiting to be processed today.
-              </p>
-              <Link
-                to="/my-orders"
-                className="inline-block mt-4 bg-white text-orange-600 px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-orange-50 transition-colors"
-              >
-                View Orders
-              </Link>
-            </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-2.5 rounded-xl text-sm font-medium transition self-start"
+            >
+              <LogOut size={18} /> Logout
+            </button>
           </div>
           <div className="absolute right-0 top-0 w-64 h-full opacity-10">
             <ShoppingBag size={256} />
           </div>
         </div>
 
-        {/* Quick Actions */}
         <QuickActions
           onOpenFlashSale={() => setShowFlashModal(true)}
           onOpenWarranty={() => setShowWarrantyModal(true)}
         />
 
-        {/* Stats Grid */}
+        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard
-            title="Today's Earnings"
+            title="Total Earnings"
             value={stats.todayEarnings.value}
             trend={stats.todayEarnings.trend}
             trendUp={stats.todayEarnings.trendUp}
@@ -392,7 +514,7 @@ const SellerDashboard = () => {
             icon={ShoppingBag}
           />
           <StatCard
-            title="Active Products"
+            title="My Products"
             value={stats.activeProducts.value}
             trend={stats.activeProducts.trend}
             trendUp={stats.activeProducts.trendUp}
@@ -407,7 +529,88 @@ const SellerDashboard = () => {
           />
         </div>
 
-        {/* ==================== FLASH SALES SECTION ==================== */}
+        {/* MY PRODUCTS */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <Package className="text-orange-500" size={22} />
+              <h3 className="text-lg font-semibold text-gray-900">My Products</h3>
+            </div>
+            <Link
+              to="/add-product"
+              className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl text-sm font-medium hover:bg-orange-600 transition"
+            >
+              <Plus size={16} /> Add Product
+            </Link>
+          </div>
+
+          {products.length === 0 ? (
+            <div className="text-center py-10 text-gray-500">
+              <Package size={40} className="mx-auto mb-3 text-gray-300" />
+              <p>No products yet</p>
+              <p className="text-sm mt-1">
+                Add a product while logged in as seller — it must save your seller ID.
+              </p>
+              <p className="text-xs mt-2 text-orange-600">
+                Tip: Open browser console (F12) and check the seller ID logs.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {products.slice(0, 8).map((product) => (
+                <div
+                  key={product._id}
+                  className="border border-gray-100 rounded-xl overflow-hidden hover:shadow-md transition"
+                >
+                  <div className="h-28 bg-gray-50">
+                    <img
+                      src={
+                        product.image
+                          ? `http://localhost:5000${product.image}`
+                          : "https://via.placeholder.com/300"
+                      }
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-3">
+                    <p className="font-medium text-sm line-clamp-1">{product.name}</p>
+                    <p className="text-orange-600 font-bold text-sm mt-1">
+                      KSh {product.price?.toLocaleString()}
+                    </p>
+                    <div className="flex gap-1 mt-2 flex-wrap">
+                      {product.isFlashSale && (
+                        <span className="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded font-medium">
+                          Flash
+                        </span>
+                      )}
+                      {(product.warranty || product.warrantyMonths) && (
+                        <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-medium">
+                          Warranty
+                        </span>
+                      )}
+                      <span className="text-[10px] text-gray-400">
+                        Stock: {product.stock ?? 0}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {products.length > 8 && (
+            <div className="mt-4 text-center">
+              <Link
+                to="/my-products"
+                className="text-sm text-orange-600 hover:underline font-medium"
+              >
+                View all {products.length} products →
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* ================= FLASH SALES ================= */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
@@ -421,34 +624,35 @@ const SellerDashboard = () => {
               <Plus size={16} /> Create Flash Sale
             </button>
           </div>
-
           {flashSales.length === 0 ? (
             <div className="text-center py-10 text-gray-500">
               <Zap size={40} className="mx-auto mb-3 text-gray-300" />
               <p>No active flash sales</p>
-              <p className="text-sm mt-1">Create one to boost your sales!</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {flashSales.map((product) => (
-                <div key={product._id} className="border border-orange-100 bg-orange-50 rounded-xl p-4">
+                <div
+                  key={product._id}
+                  className="border border-orange-100 bg-orange-50 rounded-xl p-4"
+                >
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="font-medium text-gray-900">{product.name}</p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        Original: <span className="line-through">KSh {product.price?.toLocaleString()}</span>
-                      </p>
                       <p className="text-lg font-bold text-orange-600 mt-1">
                         Flash: KSh {product.flashSalePrice?.toLocaleString()}
                       </p>
                       <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
                         <Clock size={12} />
-                        Ends: {product.flashSaleEnd ? new Date(product.flashSaleEnd).toLocaleString() : "—"}
+                        Ends:{" "}
+                        {product.flashSaleEnd
+                          ? new Date(product.flashSaleEnd).toLocaleString()
+                          : "—"}
                       </p>
                     </div>
                     <button
                       onClick={() => endFlashSale(product._id)}
-                      className="text-xs px-2.5 py-1 bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-200 transition"
+                      className="text-xs px-2.5 py-1 bg-rose-100 text-rose-700 rounded-lg"
                     >
                       End
                     </button>
@@ -459,53 +663,43 @@ const SellerDashboard = () => {
           )}
         </div>
 
-        {/* ==================== WARRANTY SECTION ==================== */}
+        {/* WARRANTY */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
               <Shield className="text-orange-500" size={22} />
               <h3 className="text-lg font-semibold text-gray-900">Warranty Products</h3>
             </div>
-            <div className="flex items-center gap-2">
-              <Link
-                to="/warranty-products"
-                className="text-sm text-orange-600 hover:text-orange-700 font-medium"
-              >
-                View All
-              </Link>
-              <button
-                onClick={() => setShowWarrantyModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl text-sm font-medium hover:bg-orange-600 transition"
-              >
-                <Plus size={16} /> Add Warranty
-              </button>
-            </div>
+            <button
+              onClick={() => setShowWarrantyModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-xl text-sm font-medium hover:bg-orange-600 transition"
+            >
+              <Plus size={16} /> Add Warranty
+            </button>
           </div>
-
           {warrantyProducts.length === 0 ? (
             <div className="text-center py-10 text-gray-500">
               <Shield size={40} className="mx-auto mb-3 text-gray-300" />
               <p>No products with warranty yet</p>
-              <p className="text-sm mt-1">Add warranty to build buyer trust!</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {warrantyProducts.map((product) => (
-                <div key={product._id} className="border border-orange-100 bg-orange-50 rounded-xl p-4">
+                <div
+                  key={product._id}
+                  className="border border-orange-100 bg-orange-50 rounded-xl p-4"
+                >
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="font-medium text-gray-900">{product.name}</p>
-                      <p className="text-sm text-gray-500 mt-1">
-                        Price: KSh {product.price?.toLocaleString()}
-                      </p>
                       <p className="text-lg font-bold text-orange-600 mt-1 flex items-center gap-1">
                         <Shield size={16} />
-                        {product.warrantyMonths || 12} Months Warranty
+                        {product.warrantyMonths || 12} Months
                       </p>
                     </div>
                     <button
                       onClick={() => removeWarranty(product._id)}
-                      className="text-xs px-2.5 py-1 bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-200 transition"
+                      className="text-xs px-2.5 py-1 bg-rose-100 text-rose-700 rounded-lg"
                     >
                       Remove
                     </button>
@@ -516,21 +710,15 @@ const SellerDashboard = () => {
           )}
         </div>
 
-        {/* Charts */}
+        {/* Charts + Orders + Reviews */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Sales Performance</h3>
-              <div className="flex items-center gap-2 text-sm text-emerald-600 font-medium">
-                <TrendingUp size={16} />
-                <span>On track (+15%)</span>
-              </div>
-            </div>
+            <h3 className="text-lg font-semibold mb-6">Sales Performance</h3>
             <div className="flex items-end gap-3 h-48">
               {salesChartData.map((item) => (
                 <div key={item.name} className="flex-1 flex flex-col items-center gap-2">
                   <div
-                    className="w-full bg-orange-500 rounded-t-lg transition-all"
+                    className="w-full bg-orange-500 rounded-t-lg"
                     style={{ height: `${(item.sales / 5000) * 100}%` }}
                   />
                   <span className="text-xs text-gray-500">{item.name}</span>
@@ -538,20 +726,13 @@ const SellerDashboard = () => {
               ))}
             </div>
           </div>
-
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Order Trends</h3>
-              <select className="text-sm border border-gray-200 rounded-lg px-3 py-1 bg-gray-50">
-                <option>This Week</option>
-                <option>Last Week</option>
-              </select>
-            </div>
+            <h3 className="text-lg font-semibold mb-6">Order Trends</h3>
             <div className="flex items-end gap-3 h-48">
               {salesChartData.map((item) => (
                 <div key={item.name} className="flex-1 flex flex-col items-center gap-2">
                   <div
-                    className="w-full bg-emerald-500 rounded-t-lg transition-all"
+                    className="w-full bg-emerald-500 rounded-t-lg"
                     style={{ height: `${(item.orders / 35) * 100}%` }}
                   />
                   <span className="text-xs text-gray-500">{item.name}</span>
@@ -561,92 +742,26 @@ const SellerDashboard = () => {
           </div>
         </div>
 
-        {/* Bottom Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Recent Orders</h3>
-              <Link to="/my-orders" className="text-sm text-orange-600 hover:text-orange-700 font-medium">
+            <div className="p-6 border-b flex justify-between">
+              <h3 className="text-lg font-semibold">Recent Orders</h3>
+              <Link to="/my-orders" className="text-sm text-orange-600 font-medium">
                 Manage All
               </Link>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Order ID</th>
-                    <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Product</th>
-                    <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Amount</th>
-                    <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Status</th>
-                    <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {orders.length > 0 ? (
-                    orders.map((order) => (
-                      <tr key={order._id || order.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 text-sm font-medium text-orange-600">{order._id || order.id}</td>
-                        <td className="px-6 py-4 text-sm text-gray-900">{order.product || order.items?.[0]?.name || 'Product'}</td>
-                        <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                          KSh {(order.total || order.amount || 0).toLocaleString()}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
-                            {order.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <button className="text-sm text-orange-600 hover:text-orange-800 font-medium">View</button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-10 text-center text-gray-500">
-                        No recent orders yet
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+            <div className="p-6 text-center text-gray-500">
+              {orders.length === 0 ? "No recent orders yet" : `${orders.length} orders`}
             </div>
           </div>
-
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Latest Reviews</h3>
-              <MessageSquare size={18} className="text-gray-400" />
-            </div>
-            <div className="space-y-4">
-              {[
-                { user: 'Alice J.', rating: 5, text: 'Amazing product quality!', product: 'Car Cover XL' },
-                { user: 'Bob S.', rating: 4, text: 'Good value for money.', product: 'Bike Cover Pro' },
-                { user: 'Carol W.', rating: 5, text: 'Fast shipping, loved it!', product: 'Truck Cover' },
-              ].map((review, i) => (
-                <div key={i} className="p-4 bg-gray-50 rounded-xl">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-900">{review.user}</span>
-                    <div className="flex gap-0.5">
-                      {[...Array(5)].map((_, j) => (
-                        <Star
-                          key={j}
-                          size={12}
-                          className={j < review.rating ? 'text-amber-400 fill-amber-400' : 'text-gray-300'}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-500 mb-1">{review.product}</p>
-                  <p className="text-sm text-gray-700">"{review.text}"</p>
-                  <button className="mt-2 text-xs text-orange-600 hover:text-orange-700 font-medium">Reply</button>
-                </div>
-              ))}
-            </div>
+            <h3 className="text-lg font-semibold mb-4">Latest Reviews</h3>
+            <p className="text-sm text-gray-500">Reviews will appear here</p>
           </div>
         </div>
       </div>
 
-      {/* ==================== CREATE FLASH SALE MODAL ==================== */}
+      {/* Flash Sale Modal */}
       {showFlashModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg p-6 relative">
@@ -656,84 +771,59 @@ const SellerDashboard = () => {
             >
               <X size={20} />
             </button>
-
-            <div className="flex items-center gap-2 mb-6">
-              <Zap className="text-orange-500" size={24} />
-              <h2 className="text-xl font-bold text-gray-900">Create Flash Sale</h2>
-            </div>
-
+            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+              <Zap className="text-orange-500" /> Create Flash Sale
+            </h2>
             <form onSubmit={handleCreateFlashSale} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Select Product *</label>
-                <select
-                  value={flashForm.productId}
-                  onChange={(e) => setFlashForm({ ...flashForm, productId: e.target.value })}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  required
-                >
-                  <option value="">Choose a product</option>
-                  {products.map((p) => (
-                    <option key={p._id} value={p._id}>
-                      {p.name} — KSh {p.price?.toLocaleString()}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Flash Sale Price (KSh) *</label>
-                <input
-                  type="number"
-                  value={flashForm.flashSalePrice}
-                  onChange={(e) => setFlashForm({ ...flashForm, flashSalePrice: e.target.value })}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  placeholder="e.g. 2500"
-                  required
-                  min="1"
-                />
-              </div>
-
+              <select
+                value={flashForm.productId}
+                onChange={(e) =>
+                  setFlashForm({ ...flashForm, productId: e.target.value })
+                }
+                className="w-full border rounded-xl px-4 py-2.5"
+                required
+              >
+                <option value="">Choose a product</option>
+                {products.map((p) => (
+                  <option key={p._id} value={p._id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="number"
+                placeholder="Flash price"
+                value={flashForm.flashSalePrice}
+                onChange={(e) =>
+                  setFlashForm({ ...flashForm, flashSalePrice: e.target.value })
+                }
+                className="w-full border rounded-xl px-4 py-2.5"
+                required
+              />
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Date & Time *</label>
-                  <input
-                    type="datetime-local"
-                    value={flashForm.flashSaleStart}
-                    onChange={(e) => setFlashForm({ ...flashForm, flashSaleStart: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">End Date & Time *</label>
-                  <input
-                    type="datetime-local"
-                    value={flashForm.flashSaleEnd}
-                    onChange={(e) => setFlashForm({ ...flashForm, flashSaleEnd: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Limited Stock (optional)
-                </label>
                 <input
-                  type="number"
-                  value={flashForm.flashSaleStock}
-                  onChange={(e) => setFlashForm({ ...flashForm, flashSaleStock: e.target.value })}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  placeholder="Leave empty for unlimited"
-                  min="1"
+                  type="datetime-local"
+                  value={flashForm.flashSaleStart}
+                  onChange={(e) =>
+                    setFlashForm({ ...flashForm, flashSaleStart: e.target.value })
+                  }
+                  className="w-full border rounded-xl px-4 py-2.5"
+                  required
+                />
+                <input
+                  type="datetime-local"
+                  value={flashForm.flashSaleEnd}
+                  onChange={(e) =>
+                    setFlashForm({ ...flashForm, flashSaleEnd: e.target.value })
+                  }
+                  className="w-full border rounded-xl px-4 py-2.5"
+                  required
                 />
               </div>
-
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-orange-500 text-white py-3 rounded-xl font-semibold hover:bg-orange-600 transition disabled:opacity-60"
+                className="w-full bg-orange-500 text-white py-3 rounded-xl font-semibold"
               >
                 {submitting ? "Creating..." : "Create Flash Sale"}
               </button>
@@ -742,7 +832,7 @@ const SellerDashboard = () => {
         </div>
       )}
 
-      {/* ==================== ADD WARRANTY MODAL ==================== */}
+      {/* Warranty Modal */}
       {showWarrantyModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl w-full max-w-lg p-6 relative">
@@ -752,57 +842,44 @@ const SellerDashboard = () => {
             >
               <X size={20} />
             </button>
-
-            <div className="flex items-center gap-2 mb-6">
-              <Shield className="text-orange-500" size={24} />
-              <h2 className="text-xl font-bold text-gray-900">Add Warranty</h2>
-            </div>
-
+            <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
+              <Shield className="text-orange-500" /> Add Warranty
+            </h2>
             <form onSubmit={handleAddWarranty} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Select Product *</label>
-                <select
-                  value={warrantyForm.productId}
-                  onChange={(e) => setWarrantyForm({ ...warrantyForm, productId: e.target.value })}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  required
-                >
-                  <option value="">Choose a product</option>
-                  {products.map((p) => (
-                    <option key={p._id} value={p._id}>
-                      {p.name} — KSh {p.price?.toLocaleString()}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Warranty Period *</label>
-                <select
-                  value={warrantyForm.warrantyMonths}
-                  onChange={(e) => setWarrantyForm({ ...warrantyForm, warrantyMonths: e.target.value })}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  required
-                >
-                  <option value="3">3 Months</option>
-                  <option value="6">6 Months</option>
-                  <option value="12">12 Months</option>
-                  <option value="24">24 Months</option>
-                </select>
-              </div>
-
-              <p className="text-xs text-gray-500">
-                Products with warranty will appear on the{" "}
-                <Link to="/warranty-products" className="text-orange-600 hover:underline">
-                  Warranty Products
-                </Link>{" "}
-                page for buyers.
-              </p>
-
+              <select
+                value={warrantyForm.productId}
+                onChange={(e) =>
+                  setWarrantyForm({ ...warrantyForm, productId: e.target.value })
+                }
+                className="w-full border rounded-xl px-4 py-2.5"
+                required
+              >
+                <option value="">Choose a product</option>
+                {products.map((p) => (
+                  <option key={p._id} value={p._id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={warrantyForm.warrantyMonths}
+                onChange={(e) =>
+                  setWarrantyForm({
+                    ...warrantyForm,
+                    warrantyMonths: e.target.value,
+                  })
+                }
+                className="w-full border rounded-xl px-4 py-2.5"
+              >
+                <option value="3">3 Months</option>
+                <option value="6">6 Months</option>
+                <option value="12">12 Months</option>
+                <option value="24">24 Months</option>
+              </select>
               <button
                 type="submit"
                 disabled={submittingWarranty}
-                className="w-full bg-orange-500 text-white py-3 rounded-xl font-semibold hover:bg-orange-600 transition disabled:opacity-60"
+                className="w-full bg-orange-500 text-white py-3 rounded-xl font-semibold"
               >
                 {submittingWarranty ? "Saving..." : "Add Warranty"}
               </button>

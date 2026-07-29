@@ -10,6 +10,10 @@ const userSchema = new mongoose.Schema(
       enum: ["buyer", "seller", "admin", "vendor"],
       default: "buyer",
     },
+
+    // WhatsApp / contact number (Kenya format e.g. 0712345678 or 254712345678)
+    phone: { type: String, default: "" },
+
     photo: String,
     avatar: String,
 
@@ -22,6 +26,7 @@ const userSchema = new mongoose.Schema(
       sellingLicence: { type: String, default: null },
     },
 
+    isActive: { type: Boolean, default: true },
     isVerified: { type: Boolean, default: false },
     verificationStatus: {
       type: String,

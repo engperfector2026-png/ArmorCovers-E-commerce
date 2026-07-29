@@ -47,6 +47,40 @@ const productSchema = new mongoose.Schema({
   },
   // ==============================================================
 
+  // ====================== FREE GIFT FIELDS ======================
+  hasFreeGift: {
+    type: Boolean,
+    default: false,
+  },
+  // New: multiple free gifts
+  gifts: [
+    {
+      name: { type: String, required: true },
+      description: { type: String, default: "" },
+      image: { type: String, default: "" },
+    },
+  ],
+  // Legacy single-gift fields (kept for backward compatibility)
+  giftName: {
+    type: String,
+  },
+  giftDescription: {
+    type: String,
+  },
+  giftImage: {
+    type: String,
+  },
+  // ==============================================================
+
+  reviews: [
+    {
+      name: String,
+      rating: Number,
+      comment: String,
+      date: { type: Date, default: Date.now },
+    },
+  ],
+
   createdAt: { type: Date, default: Date.now },
 });
 

@@ -1,6 +1,25 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { ShoppingCart, Plus, Minus, Truck, ShieldCheck, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
+import {
+  ShoppingCart,
+  Plus,
+  Minus,
+  Truck,
+  ShieldCheck,
+  ArrowLeft,
+  Package,
+  Zap,
+  BadgePercent,
+  Gift,
+} from "lucide-react";
+
+interface SellerInfo {
+  _id?: string;
+  id?: string;
+  name?: string;
+  phone?: string;
+}
 
 interface WarehouseProduct {
   _id: string;
@@ -13,6 +32,17 @@ interface WarehouseProduct {
   minimumOrder: number;
   category: string;
   subcategory?: string;
+  seller?: string | SellerInfo;
+  // Free Gift
+  hasFreeGift?: boolean;
+  giftName?: string;
+  giftDescription?: string;
+  giftImage?: string;
+  gift?: {
+    name?: string;
+    description?: string;
+    image?: string;
+  };
 }
 
 interface SubCategory {
@@ -46,7 +76,7 @@ function Warehouse() {
         { name: "Electrical & Power", value: "Electrical & Power" },
         { name: "Tools & Industrial Electronics", value: "Tools & Industrial Electronics" },
         { name: "Automotive Electronics", value: "Automotive Electronics" },
-      ]
+      ],
     },
     {
       name: "Vehicles",
@@ -59,7 +89,7 @@ function Warehouse() {
         { name: "Truck & Heavy Vehicle Covers", value: "Truck & Heavy Vehicle Covers" },
         { name: "Interior Protection", value: "Interior Protection" },
         { name: "Car Electronics", value: "Car Electronics" },
-      ]
+      ],
     },
     {
       name: "Fashion",
@@ -72,7 +102,7 @@ function Warehouse() {
         { name: "Footwear", value: "Footwear" },
         { name: "Bags & Accessories", value: "Bags & Accessories" },
         { name: "Traditional & Cultural Wear", value: "Traditional & Cultural Wear" },
-      ]
+      ],
     },
     {
       name: "Home",
@@ -85,7 +115,7 @@ function Warehouse() {
         { name: "Home Improvement", value: "Home Improvement" },
         { name: "Lighting & Electricals", value: "Lighting & Electricals" },
         { name: "Garden & Outdoor", value: "Garden & Outdoor" },
-      ]
+      ],
     },
     {
       name: "Agriculture",
@@ -98,7 +128,7 @@ function Warehouse() {
         { name: "Protective Covers & Nets", value: "Protective Covers & Nets" },
         { name: "Animal Husbandry", value: "Animal Husbandry" },
         { name: "Harvesting & Storage", value: "Harvesting & Storage" },
-      ]
+      ],
     },
     {
       name: "Beauty",
@@ -111,7 +141,7 @@ function Warehouse() {
         { name: "Fragrances", value: "Fragrances" },
         { name: "Personal Care", value: "Personal Care" },
         { name: "Beauty Tools & Devices", value: "Beauty Tools & Devices" },
-      ]
+      ],
     },
     {
       name: "Sports",
@@ -124,7 +154,7 @@ function Warehouse() {
         { name: "Sports Apparel & Gear", value: "Sports Apparel & Gear" },
         { name: "Camping & Hiking", value: "Camping & Hiking" },
         { name: "Sports Protection", value: "Sports Protection" },
-      ]
+      ],
     },
     {
       name: "Health",
@@ -136,7 +166,7 @@ function Warehouse() {
         { name: "Personal Hygiene", value: "Personal Hygiene" },
         { name: "Fitness & Wellness", value: "Fitness & Wellness" },
         { name: "First Aid & Safety", value: "First Aid & Safety" },
-      ]
+      ],
     },
     {
       name: "Stationary",
@@ -148,7 +178,7 @@ function Warehouse() {
         { name: "Office Supplies", value: "Office Supplies" },
         { name: "Art & Craft Supplies", value: "Art & Craft Supplies" },
         { name: "School Supplies", value: "School Supplies" },
-      ]
+      ],
     },
     {
       name: "Education",
@@ -160,7 +190,7 @@ function Warehouse() {
         { name: "Educational Toys", value: "Educational Toys" },
         { name: "School Furniture", value: "School Furniture" },
         { name: "E-Learning Devices", value: "E-Learning Devices" },
-      ]
+      ],
     },
   ];
 
@@ -168,7 +198,9 @@ function Warehouse() {
     const fetchWarehouseProducts = async () => {
       try {
         setLoading(true);
-        const response = await axios.get("http://localhost:5000/api/products/warehouse");
+        const response = await axios.get(
+          "http://localhost:5000/api/products/warehouse"
+        );
         setProducts(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error("❌ Error fetching warehouse products:", error);
@@ -181,61 +213,183 @@ function Warehouse() {
     fetchWarehouseProducts();
   }, []);
 
-  const updateQuantity = (productId: string, newQty: number) => {
-    setQuantities(prev => ({
+  const getMinOrder = (product: WarehouseProduct) =>
+    Math.max(1, product.minimumOrder || 1);
+
+  const getQty = (product: WarehouseProduct) =>
+    quantities[product._id] ?? getMinOrder(product);
+
+  const updateQuantity = (product: WarehouseProduct, newQty: number) => {
+    const min = getMinOrder(product);
+    const max = product.stock > 0 ? product.stock : 9999;
+    const clamped = Math.min(max, Math.max(min, newQty));
+    setQuantities((prev) => ({
       ...prev,
-      [productId]: Math.max(1, newQty)
+      [product._id]: clamped,
     }));
   };
 
+  const getSellerName = (product: WarehouseProduct) => {
+    if (!product.seller) return "ArmorCovers";
+    if (typeof product.seller === "object" && product.seller.name) {
+      return product.seller.name;
+    }
+    return "Verified Seller";
+  };
+
+  const getUnitPrice = (product: WarehouseProduct) => {
+    if (product.wholesalePrice && product.wholesalePrice > 0) {
+      return product.wholesalePrice;
+    }
+    return product.price;
+  };
+
+  const getSavingsPercent = (product: WarehouseProduct) => {
+    if (!product.wholesalePrice || product.wholesalePrice >= product.price) {
+      return 0;
+    }
+    return Math.round(
+      ((product.price - product.wholesalePrice) / product.price) * 100
+    );
+  };
+
+  // Free gift helpers
+  const hasFreeGift = (product: WarehouseProduct) => {
+    if (product.hasFreeGift === false) return false;
+    return !!(product.giftName || product.gift?.name);
+  };
+
+  const getGiftName = (product: WarehouseProduct) => {
+    return product.giftName || product.gift?.name || "Free Gift";
+  };
+
   const addToCart = (product: WarehouseProduct) => {
-    const qty = quantities[product._id] || product.minimumOrder || 1;
+    const min = getMinOrder(product);
+    const qty = getQty(product);
+
+    if (qty < min) {
+      alert(`Minimum order for this product is ${min} units.`);
+      return;
+    }
+
+    const unitPrice = getUnitPrice(product);
     const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-    
-    for (let i = 0; i < qty; i++) {
-      cart.push(product);
+
+    const existing = cart.findIndex(
+      (item: any) => item._id === product._id && item.isWarehouse
+    );
+
+    if (existing !== -1) {
+      cart[existing].quantity = (cart[existing].quantity || min) + qty;
+    } else {
+      cart.push({
+        ...product,
+        price: unitPrice,
+        quantity: qty,
+        isWarehouse: true,
+        minimumOrder: min,
+      });
     }
 
     localStorage.setItem("cart", JSON.stringify(cart));
-    alert(`✅ ${qty} x ${product.name} added to cart!`);
+
+    const giftText = hasFreeGift(product)
+      ? `\n🎁 Free gift: ${getGiftName(product)}`
+      : "";
+
+    alert(
+      `✅ ${qty} × ${product.name} added to cart!\nTotal: KSh ${(unitPrice * qty).toLocaleString()}${giftText}`
+    );
   };
 
-  const filteredProducts = products.filter(product => {
+  const filteredProducts = products.filter((product) => {
     if (!selectedMainCategory) return true;
     if (product.category !== selectedMainCategory) return false;
     if (selectedSubCategory === "All") return true;
     return product.subcategory === selectedSubCategory;
   });
 
-  const currentMain = mainCategories.find(cat => cat.name === selectedMainCategory);
+  const currentMain = mainCategories.find(
+    (cat) => cat.name === selectedMainCategory
+  );
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center text-xl">Loading Warehouse...</div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-xl text-slate-600">
+        Loading Warehouse...
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-gradient-to-br from-slate-50 via-white to-slate-50 min-h-screen py-12 px-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Hero Section */}
-        <div className="text-center mb-16">
-          <h1 className="text-6xl font-bold mb-4 tracking-tight bg-gradient-to-r from-slate-900 via-orange-600 to-slate-900 bg-clip-text text-transparent">
-            ArmorCovers Warehouse
-          </h1>
-          <p className="text-2xl text-gray-600 max-w-2xl mx-auto">
-            Premium Quality Products • Direct from Warehouse • Trusted Protection
-          </p>
-          <div className="flex justify-center gap-10 mt-8 text-sm text-gray-500">
-            <div className="flex items-center gap-3">
-              <Truck className="text-orange-500" size={24} /> Fast & Reliable Delivery
+    <div className="bg-slate-50 min-h-screen">
+      {/* Compact Hero */}
+      <section className="bg-gradient-to-br from-slate-900 via-slate-800 to-orange-900 text-white">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-10 md:py-14">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 bg-orange-500/20 text-orange-300 text-xs font-semibold px-3 py-1 rounded-full mb-3">
+                <Package size={12} />
+                BULK · WHOLESALE · WAREHOUSE
+              </div>
+              <h1 className="text-3xl md:text-5xl font-bold tracking-tight">
+                ArmorCovers{" "}
+                <span className="text-orange-400">Warehouse</span>
+              </h1>
+              <p className="text-slate-300 mt-2 max-w-xl text-sm md:text-base">
+                Stock up at wholesale prices. Minimum orders apply. Fast dispatch
+                across Kenya.
+              </p>
             </div>
-            <div className="flex items-center gap-3">
-              <ShieldCheck className="text-orange-500" size={24} /> Verified Premium Stock
+
+            <div className="flex flex-wrap gap-3 text-xs md:text-sm">
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur px-3 py-2 rounded-xl">
+                <BadgePercent size={16} className="text-orange-400" />
+                Wholesale rates
+              </div>
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur px-3 py-2 rounded-xl">
+                <Truck size={16} className="text-orange-400" />
+                Bulk delivery
+              </div>
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur px-3 py-2 rounded-xl">
+                <ShieldCheck size={16} className="text-orange-400" />
+                Verified stock
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Main Categories */}
-        <div className="mb-12">
-          <h2 className="text-3xl font-semibold mb-6 text-center text-gray-800">Shop by Category</h2>
-          <div className="flex gap-4 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide">
+          <div className="mt-6 flex flex-wrap gap-2">
+            <span className="inline-flex items-center gap-1.5 bg-orange-500 text-white text-xs font-semibold px-3 py-1.5 rounded-full">
+              <Zap size={12} fill="white" />
+              Buy more · Save more
+            </span>
+            <span className="inline-flex items-center gap-1.5 bg-white/10 text-orange-200 text-xs px-3 py-1.5 rounded-full">
+              Limited warehouse stock
+            </span>
+            <span className="inline-flex items-center gap-1.5 bg-white/10 text-orange-200 text-xs px-3 py-1.5 rounded-full">
+              Same-day processing
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-10">
+        {/* Categories */}
+        <div className="mb-6">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <button
+              onClick={() => {
+                setSelectedMainCategory(null);
+                setSelectedSubCategory("All");
+              }}
+              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition ${
+                !selectedMainCategory
+                  ? "bg-orange-500 text-white shadow"
+                  : "bg-white border border-slate-200 text-slate-700 hover:border-orange-300"
+              }`}
+            >
+              All
+            </button>
             {mainCategories.map((category) => (
               <button
                 key={category.name}
@@ -243,123 +397,240 @@ function Warehouse() {
                   setSelectedMainCategory(category.name);
                   setSelectedSubCategory("All");
                 }}
-                className={`group px-8 py-6 rounded-3xl font-medium whitespace-nowrap transition-all duration-300 flex items-center gap-4 text-lg min-w-fit snap-start border ${
+                className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex items-center gap-1.5 transition ${
                   selectedMainCategory === category.name
-                    ? "bg-orange-500 text-white shadow-xl scale-105 border-orange-500"
-                    : "bg-white hover:bg-gray-50 border-gray-200 hover:border-gray-300 hover:shadow-md"
+                    ? "bg-orange-500 text-white shadow"
+                    : "bg-white border border-slate-200 text-slate-700 hover:border-orange-300"
                 }`}
               >
-                <span className="text-4xl transition-transform group-hover:scale-110">{category.icon}</span>
-                <span>{category.name}</span>
+                <span>{category.icon}</span>
+                {category.name}
               </button>
             ))}
           </div>
-        </div>
 
-        {/* Subcategories */}
-        {selectedMainCategory && currentMain && (
-          <div className="mb-12">
-            <div className="flex items-center gap-4 mb-6">
+          {selectedMainCategory && currentMain && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <button
                 onClick={() => {
                   setSelectedMainCategory(null);
                   setSelectedSubCategory("All");
                 }}
-                className="flex items-center gap-2 text-orange-600 hover:text-orange-700 font-medium transition-colors"
+                className="flex items-center gap-1 text-orange-600 text-xs font-medium hover:underline"
               >
-                <ArrowLeft size={22} /> Back to All Categories
+                <ArrowLeft size={14} /> All
               </button>
-              <h3 className="text-3xl font-bold text-gray-800">{selectedMainCategory}</h3>
-            </div>
-
-            <div className="flex gap-3 flex-wrap">
               {currentMain.subcategories.map((sub) => (
                 <button
                   key={sub.value}
                   onClick={() => setSelectedSubCategory(sub.value)}
-                  className={`px-7 py-3.5 rounded-2xl font-medium transition-all duration-200 ${
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition ${
                     selectedSubCategory === sub.value
-                      ? "bg-orange-500 text-white shadow-md"
-                      : "bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                      ? "bg-orange-100 text-orange-700 border border-orange-200"
+                      : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
                   }`}
                 >
                   {sub.name}
                 </button>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <p className="text-sm text-slate-500 mb-4">
+          {filteredProducts.length} warehouse{" "}
+          {filteredProducts.length === 1 ? "item" : "items"}
+          {selectedMainCategory ? ` in ${selectedMainCategory}` : ""}
+        </p>
+
+        {/* Product grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
           {filteredProducts.length > 0 ? (
             filteredProducts.map((product) => {
-              const qty = quantities[product._id] || product.minimumOrder || 1;
+              const min = getMinOrder(product);
+              const qty = getQty(product);
+              const unitPrice = getUnitPrice(product);
+              const savings = getSavingsPercent(product);
+              const sellerName = getSellerName(product);
+              const lineTotal = unitPrice * qty;
+              const onGift = hasFreeGift(product);
+
               return (
-                <div 
-                  key={product._id} 
-                  className="bg-white rounded-3xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden group border border-gray-100 flex flex-col h-full"
+                <div
+                  key={product._id}
+                  className={`bg-white rounded-2xl border shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group ${
+                    onGift
+                      ? "border-purple-200 ring-1 ring-purple-50"
+                      : "border-slate-100"
+                  }`}
                 >
-                  <div className="relative h-72 overflow-hidden">
+                  {/* Image */}
+                  <Link
+                    to={`/products/${product._id}`}
+                    className="relative block h-28 sm:h-32 bg-slate-50 overflow-hidden"
+                  >
                     <img
-                      src={product.image ? `http://localhost:5000${product.image}` : "https://via.placeholder.com/600x400"}
+                      src={
+                        product.image
+                          ? `http://localhost:5000${product.image}`
+                          : "https://via.placeholder.com/400x300?text=Warehouse"
+                      }
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
-                    <div className="absolute top-5 right-5 bg-green-500 text-white text-xs px-4 py-1.5 rounded-full font-medium shadow">
-                      In Stock
-                    </div>
-                  </div>
 
-                  <div className="p-8 flex-1 flex flex-col">
-                    <h3 className="font-bold text-2xl mb-3 line-clamp-2 leading-tight">{product.name}</h3>
-                    <p className="text-gray-600 mb-7 line-clamp-3 text-[15px] flex-1">{product.description}</p>
-
-                    <div className="flex justify-between items-end mb-7 mt-auto">
-                      <div>
-                        <p className="text-xs text-gray-500">Retail Price</p>
-                        <p className="text-3xl font-bold text-orange-600">KSh {product.price.toLocaleString()}</p>
-                      </div>
-                      {product.wholesalePrice && (
-                        <div className="text-right">
-                          <p className="text-xs text-gray-500">Wholesale</p>
-                          <p className="font-bold text-lg">KSh {product.wholesalePrice.toLocaleString()}</p>
+                    <div className="absolute top-2 left-2 flex flex-col gap-1">
+                      {savings > 0 && (
+                        <div className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow">
+                          -{savings}%
+                        </div>
+                      )}
+                      {onGift && (
+                        <div className="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 shadow">
+                          <Gift size={10} />
+                          FREE GIFT
                         </div>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-4 mb-7">
-                      <button 
-                        onClick={() => updateQuantity(product._id, qty - 1)} 
-                        className="p-3 border rounded-2xl hover:bg-gray-100 active:bg-gray-200 transition"
-                      >
-                        <Minus size={20} />
-                      </button>
-                      <span className="text-2xl font-semibold w-12 text-center">{qty}</span>
-                      <button 
-                        onClick={() => updateQuantity(product._id, qty + 1)} 
-                        className="p-3 border rounded-2xl hover:bg-gray-100 active:bg-gray-200 transition"
-                      >
-                        <Plus size={20} />
-                      </button>
+                    <div className="absolute top-2 right-2 bg-emerald-500 text-white text-[10px] font-medium px-2 py-0.5 rounded-full">
+                      Bulk
+                    </div>
+                  </Link>
+
+                  {/* Body */}
+                  <div className="p-3 flex-1 flex flex-col">
+                    <Link to={`/products/${product._id}`}>
+                      <h3 className="font-semibold text-[13px] sm:text-sm line-clamp-2 leading-snug text-slate-800 group-hover:text-orange-600 transition-colors">
+                        {product.name}
+                      </h3>
+                    </Link>
+
+                    <p className="text-[10px] text-slate-400 mt-0.5 truncate">
+                      by{" "}
+                      <span className="text-slate-600 font-medium">
+                        {sellerName}
+                      </span>
+                    </p>
+
+                    {onGift && (
+                      <p className="text-[10px] text-purple-600 font-medium mt-1 flex items-center gap-1">
+                        <Gift size={10} />
+                        + {getGiftName(product)}
+                      </p>
+                    )}
+
+                    {/* Prices */}
+                    <div className="mt-2">
+                      {product.wholesalePrice &&
+                      product.wholesalePrice < product.price ? (
+                        <>
+                          <p className="text-[10px] text-slate-400 line-through">
+                            Retail KSh {product.price.toLocaleString()}
+                          </p>
+                          <p className="text-base font-bold text-orange-600">
+                            KSh {unitPrice.toLocaleString()}
+                            <span className="text-[10px] font-normal text-slate-400 ml-1">
+                              / unit
+                            </span>
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-base font-bold text-orange-600">
+                          KSh {unitPrice.toLocaleString()}
+                          <span className="text-[10px] font-normal text-slate-400 ml-1">
+                            / unit
+                          </span>
+                        </p>
+                      )}
+                    </div>
+
+                    <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-2 py-1 mt-2 inline-block w-fit">
+                      Min. order: {min} units
+                    </p>
+
+                    {/* Qty controls */}
+                    <div className="flex items-center justify-between mt-3 gap-2">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => updateQuantity(product, qty - 1)}
+                          disabled={qty <= min}
+                          className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                          title={
+                            qty <= min
+                              ? `Minimum order is ${min}`
+                              : "Decrease"
+                          }
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span className="text-sm font-semibold w-8 text-center">
+                          {qty}
+                        </span>
+                        <button
+                          onClick={() => updateQuantity(product, qty + 1)}
+                          className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center hover:bg-slate-50 transition"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                      <p className="text-[11px] font-semibold text-slate-700">
+                        KSh {lineTotal.toLocaleString()}
+                      </p>
                     </div>
 
                     <button
                       onClick={() => addToCart(product)}
-                      className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-4 rounded-2xl font-semibold flex items-center justify-center gap-3 transition-all active:scale-95 text-lg shadow-lg"
+                      className="mt-3 w-full bg-orange-500 hover:bg-orange-600 text-white py-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition active:scale-[0.98] shadow-sm"
                     >
-                      <ShoppingCart size={22} /> Add {qty} to Cart
+                      <ShoppingCart size={15} />
+                      Add {qty} to Cart
+                      {onGift && <span className="opacity-90">+ Gift</span>}
                     </button>
                   </div>
                 </div>
               );
             })
           ) : (
-            <div className="col-span-full text-center py-24">
-              <p className="text-2xl text-gray-400">No warehouse products found</p>
-              <p className="text-gray-500 mt-3">Try selecting a different category or add products in Seller Dashboard</p>
+            <div className="col-span-full text-center py-16">
+              <Package size={40} className="mx-auto text-slate-300 mb-3" />
+              <p className="text-lg text-slate-500">No warehouse products found</p>
+              <p className="text-sm text-slate-400 mt-1">
+                Try another category or add products with type Warehouse / Both
+              </p>
             </div>
           )}
+        </div>
+
+        {/* Trust footer */}
+        <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
+              <BadgePercent size={20} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-800">Wholesale pricing</p>
+              <p className="text-xs text-slate-500">Lower unit cost on bulk</p>
+            </div>
+          </div>
+          <div className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
+              <Truck size={20} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-800">Bulk delivery</p>
+              <p className="text-xs text-slate-500">Kenya-wide logistics</p>
+            </div>
+          </div>
+          <div className="bg-white border border-slate-100 rounded-2xl p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
+              <ShieldCheck size={20} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-800">Verified sellers</p>
+              <p className="text-xs text-slate-500">Trusted warehouse stock</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

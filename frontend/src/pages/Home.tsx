@@ -14,7 +14,17 @@ import {
   Phone,
   Mail,
   Zap,
+  Home as HomeIcon,
+  Heart,
 } from "lucide-react";
+
+interface SellerInfo {
+  _id?: string;
+  id?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+}
 
 interface Product {
   _id: string;
@@ -24,6 +34,7 @@ interface Product {
   stock?: number;
   image?: string;
   category?: string;
+  seller?: string | SellerInfo;
   isFlashSale?: boolean;
   flashSalePrice?: number;
   flashSaleStart?: string;
@@ -75,12 +86,18 @@ const getWarrantyLabel = (p: Product) => {
   return "12 Months";
 };
 
+const getSellerName = (p: Product) => {
+  if (!p.seller) return null;
+  if (typeof p.seller === "object" && p.seller.name) return p.seller.name;
+  return null;
+};
+
 function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentProductSlide, setCurrentProductSlide] = useState(0);
   const [currentStoreSlide, setCurrentStoreSlide] = useState(0);
-
+  const [wishlist, setWishlist] = useState<string[]>([]);
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
@@ -94,8 +111,9 @@ function Home() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        // Backend populates seller: name email phone
         const res = await axios.get("http://localhost:5000/api/products");
-        setProducts(res.data);
+        setProducts(Array.isArray(res.data) ? res.data : []);
       } catch (error) {
         console.error("Failed to fetch products:", error);
       } finally {
@@ -133,7 +151,9 @@ function Home() {
   const flashSaleProducts = products.filter(isOnFlashSale);
   const warrantyProducts = products.filter(hasWarranty);
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
     const onFlash = isOnFlashSale(product);
     const finalPrice = onFlash ? product.flashSalePrice! : product.price;
     const cart = JSON.parse(localStorage.getItem("cart") || "[]");
@@ -145,6 +165,14 @@ function Home() {
       ])
     );
     alert(`✅ ${product.name} added to cart!`);
+  };
+
+  const toggleWishlist = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setWishlist((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
   };
 
   const nextProduct = () =>
@@ -232,6 +260,7 @@ function Home() {
                   const itemsLeft =
                     product.flashSaleStock ?? product.stock ?? 100;
                   const stockPercent = Math.min(100, Math.max(5, itemsLeft));
+                  const sellerName = getSellerName(product);
 
                   return (
                     <Link
@@ -254,9 +283,15 @@ function Home() {
                         </span>
                       </div>
 
-                      <p className="text-sm text-gray-800 line-clamp-2 min-h-[2.5rem] mb-1">
+                      <p className="text-sm text-gray-800 line-clamp-2 min-h-[2.5rem] mb-0.5">
                         {product.name}
                       </p>
+
+                      {sellerName && (
+                        <p className="text-[10px] text-slate-400 mb-1 truncate">
+                          by <span className="text-slate-600 font-medium">{sellerName}</span>
+                        </p>
+                      )}
 
                       <p className="text-base font-bold text-gray-900">
                         KSh {(product.flashSalePrice || product.price).toLocaleString()}
@@ -283,11 +318,10 @@ function Home() {
         </section>
       )}
 
-      {/* ===================== WARRANTY PRODUCTS (Green) ===================== */}
+      {/* ===================== WARRANTY PRODUCTS ===================== */}
       {warrantyProducts.length > 0 && (
         <section className="bg-white py-6 md:py-8">
           <div className="max-w-7xl mx-auto px-4 md:px-6">
-            {/* Green header bar */}
             <div className="bg-emerald-600 text-white rounded-t-2xl px-4 md:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="flex items-center gap-2 font-bold text-lg">
                 <span className="bg-white text-emerald-600 rounded-md p-1">
@@ -308,12 +342,12 @@ function Home() {
               </Link>
             </div>
 
-            {/* Product strip */}
             <div className="border border-t-0 border-gray-200 rounded-b-2xl bg-white overflow-x-auto">
               <div className="flex gap-0 min-w-max md:min-w-0 md:grid md:grid-cols-3 lg:grid-cols-6">
                 {warrantyProducts.slice(0, 6).map((product) => {
                   const itemsLeft = product.stock ?? 100;
                   const stockPercent = Math.min(100, Math.max(5, itemsLeft));
+                  const sellerName = getSellerName(product);
 
                   return (
                     <Link
@@ -337,9 +371,15 @@ function Home() {
                         </span>
                       </div>
 
-                      <p className="text-sm text-gray-800 line-clamp-2 min-h-[2.5rem] mb-1">
+                      <p className="text-sm text-gray-800 line-clamp-2 min-h-[2.5rem] mb-0.5">
                         {product.name}
                       </p>
+
+                      {sellerName && (
+                        <p className="text-[10px] text-slate-400 mb-1 truncate">
+                          by <span className="text-slate-600 font-medium">{sellerName}</span>
+                        </p>
+                      )}
 
                       <p className="text-base font-bold text-gray-900">
                         KSh {product.price.toLocaleString()}
@@ -477,7 +517,7 @@ function Home() {
             </div>
           </div>
 
-          {/* Featured Products */}
+          {/* ========== FEATURED PRODUCTS ========== */}
           <div className="lg:col-span-6 order-1 lg:order-2">
             <div className="flex justify-between items-center mb-6 md:mb-8">
               <h2 className="text-3xl md:text-4xl font-bold">Featured Products</h2>
@@ -495,7 +535,7 @@ function Home() {
               <div className="relative">
                 <div className="overflow-hidden">
                   <div
-                    className="flex gap-4 md:gap-6 transition-transform duration-500"
+                    className="flex gap-3 md:gap-4 transition-transform duration-500"
                     style={{ transform: `translateX(-${currentProductSlide * 100}%)` }}
                   >
                     {products.map((product) => {
@@ -504,66 +544,116 @@ function Home() {
                       const displayPrice = onFlash
                         ? product.flashSalePrice!
                         : product.price;
+                      const liked = wishlist.includes(product._id);
+                      const sellerName = getSellerName(product);
 
                       return (
                         <div
                           key={product._id}
-                          className="min-w-[88%] sm:min-w-[48%] lg:min-w-[48%] bg-white rounded-3xl shadow-md overflow-hidden relative"
+                          className={`min-w-[46%] sm:min-w-[46%] lg:min-w-[46%] bg-white rounded-2xl shadow-sm overflow-hidden relative border ${
+                            onFlash
+                              ? "border-orange-300 ring-1 ring-orange-100"
+                              : "border-gray-100"
+                          }`}
                         >
-                          <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5">
-                            {onFlash && (
-                              <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg">
-                                <Zap size={14} fill="white" />
-                                FLASH SALE
-                              </div>
-                            )}
-                            {onWarranty && (
-                              <div className="bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-lg">
-                                <Shield size={14} />
-                                {getWarrantyLabel(product)}
-                              </div>
-                            )}
-                          </div>
-                          <div className="h-52 md:h-64">
-                            <img
-                              src={
-                                product.image
-                                  ? `http://localhost:5000${product.image}`
-                                  : "https://picsum.photos/id/1060/600/400"
-                              }
-                              alt={product.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="p-5 md:p-6">
-                            <p className="uppercase text-xs text-orange-500">
-                              {product.category}
-                            </p>
-                            <h3 className="font-semibold text-lg md:text-xl my-3 line-clamp-2">
-                              {product.name}
-                            </h3>
-                            <div className="flex justify-between items-center">
+                          <Link to={`/products/${product._id}`}>
+                            <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
+                              {onFlash && (
+                                <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 shadow">
+                                  <Zap size={10} fill="white" />
+                                  SALE
+                                </div>
+                              )}
+                              {onWarranty && (
+                                <div className="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-0.5 shadow">
+                                  <Shield size={10} />
+                                  {getWarrantyLabel(product)}
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="h-28 sm:h-32 md:h-36 bg-gray-50 overflow-hidden">
+                              <img
+                                src={
+                                  product.image
+                                    ? `http://localhost:5000${product.image}`
+                                    : "https://picsum.photos/id/1060/600/400"
+                                }
+                                alt={product.name}
+                                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                              />
+                            </div>
+
+                            <div className="p-3">
+                              <p className="uppercase text-[10px] text-orange-500 font-medium">
+                                {product.category}
+                              </p>
+                              <h3 className="font-semibold text-sm my-1 line-clamp-2 leading-snug text-slate-800">
+                                {product.name}
+                              </h3>
+                              {sellerName && (
+                                <p className="text-[10px] text-slate-400 mb-1 truncate">
+                                  by{" "}
+                                  <span className="text-slate-600 font-medium">
+                                    {sellerName}
+                                  </span>
+                                </p>
+                              )}
                               <div>
                                 {onFlash && (
-                                  <p className="text-sm text-gray-400 line-through">
+                                  <p className="text-[10px] text-gray-400 line-through">
                                     KSh {product.price.toLocaleString()}
                                   </p>
                                 )}
-                                <p className="text-2xl md:text-3xl font-bold text-orange-600">
+                                <p className="text-base sm:text-lg font-bold text-orange-600">
                                   KSh {displayPrice.toLocaleString()}
                                 </p>
                               </div>
-                              <button
-                                onClick={() => addToCart(product)}
-                                className={`p-3 md:p-4 rounded-2xl text-white transition ${
-                                  onFlash
-                                    ? "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                                    : "bg-orange-500 hover:bg-orange-600"
-                                }`}
-                              >
-                                <ShoppingCart size={24} />
-                              </button>
                             </div>
+                          </Link>
+
+                          {/* Icon Actions */}
+                          <div className="px-3 pb-3 flex items-center justify-between gap-1.5 border-t border-gray-50">
+                            <Link
+                              to="/"
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-8 h-8 rounded-xl bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-orange-600 transition"
+                              title="Home"
+                            >
+                              <HomeIcon size={15} />
+                            </Link>
+
+                            <Link
+                              to="/contact"
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-8 h-8 rounded-xl bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-orange-600 transition"
+                              title="Contact"
+                            >
+                              <Phone size={15} />
+                            </Link>
+
+                            <button
+                              onClick={(e) => toggleWishlist(product._id, e)}
+                              className="w-8 h-8 rounded-xl bg-slate-50 hover:bg-slate-100 flex items-center justify-center transition"
+                              title="Wishlist"
+                            >
+                              <Heart
+                                size={15}
+                                className={
+                                  liked
+                                    ? "fill-red-500 text-red-500"
+                                    : "text-slate-500 hover:text-red-400"
+                                }
+                              />
+                            </button>
+
+                            <button
+                              onClick={(e) => addToCart(product, e)}
+                              className="w-8 h-8 rounded-xl bg-orange-500 hover:bg-orange-600 text-white flex items-center justify-center transition"
+                              title="Add to Cart"
+                            >
+                              <ShoppingCart size={15} />
+                            </button>
                           </div>
                         </div>
                       );

@@ -1,113 +1,192 @@
 import { Link } from "react-router-dom";
+import { Shield, Mail, ArrowRight } from "lucide-react";
 
 function Privacy() {
-  return (
-    <div className="bg-slate-100 min-h-screen py-12 px-6">
-      <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl overflow-hidden">
-
-        {/* Header */}
-        <div className="bg-gradient-to-r from-orange-600 to-orange-500 text-white px-10 py-16 text-center">
-          <h1 className="text-5xl font-bold mb-3">Privacy Policy</h1>
-          <p className="text-orange-100 text-lg">Last Updated: June 22, 2026</p>
-        </div>
-
-        <div className="p-10 md:p-16 space-y-12 text-gray-700 leading-relaxed">
-
-          <section className="transition-all duration-300 hover:bg-slate-50 p-6 rounded-2xl">
-            <h2 className="text-2xl font-bold text-orange-600 mb-4">1. Introduction</h2>
-            <p>
-              ArmorCovers is committed to protecting your privacy. This Privacy Policy explains how we collect, 
-              use, disclose, and safeguard your information when you use our marketplace platform.
-            </p>
-          </section>
-
-          <section className="transition-all duration-300 hover:bg-slate-50 p-6 rounded-2xl">
-            <h2 className="text-2xl font-bold text-orange-600 mb-4">2. Information We Collect</h2>
-            <ul className="list-disc pl-6 space-y-2">
-              <li><strong>Personal Information:</strong> Name, email address, phone number, delivery address</li>
-              <li><strong>Account Information:</strong> Username, password, profile details</li>
-              <li><strong>Transaction Data:</strong> Order history, payment information</li>
-              <li><strong>Usage Data:</strong> IP address, browser type, pages visited, device information</li>
-            </ul>
-          </section>
-
-          <section className="transition-all duration-300 hover:bg-slate-50 p-6 rounded-2xl">
-            <h2 className="text-2xl font-bold text-orange-600 mb-4">3. How We Use Your Information</h2>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>To process transactions and manage orders</li>
-              <li>To provide customer support and respond to inquiries</li>
-              <li>To improve our platform and user experience</li>
-              <li>To send important updates and promotional content (with your consent)</li>
-              <li>To prevent fraud and ensure platform security</li>
-            </ul>
-          </section>
-
-          <section className="transition-all duration-300 hover:bg-slate-50 p-6 rounded-2xl">
-            <h2 className="text-2xl font-bold text-orange-600 mb-4">4. Information Sharing</h2>
-            <p className="mb-4">
-              We do <strong>not sell</strong> your personal data. We may share information with:
-            </p>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>Sellers (to fulfill your orders)</li>
-              <li>Payment processors (M-Pesa, etc.)</li>
-              <li>Legal authorities when required by law</li>
-            </ul>
-          </section>
-
-          <section className="transition-all duration-300 hover:bg-slate-50 p-6 rounded-2xl">
-            <h2 className="text-2xl font-bold text-orange-600 mb-4">5. Data Security</h2>
-            <p>
-              We use industry-standard security measures to protect your information. However, no method of transmission 
-              over the internet is 100% secure.
-            </p>
-          </section>
-
-          <section className="transition-all duration-300 hover:bg-slate-50 p-6 rounded-2xl">
-            <h2 className="text-2xl font-bold text-orange-600 mb-4">6. Your Rights</h2>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>Access, correct, or delete your personal information</li>
-              <li>Object to or restrict processing of your data</li>
-              <li>Withdraw consent at any time</li>
-              <li>Request data portability</li>
-            </ul>
-          </section>
-
-          <section className="transition-all duration-300 hover:bg-slate-50 p-6 rounded-2xl">
-            <h2 className="text-2xl font-bold text-orange-600 mb-4">7. Cookies</h2>
-            <p>
-              We use cookies to enhance your browsing experience, analyze site traffic, and deliver personalized content. 
-              You can manage your cookie preferences through your browser settings.
-            </p>
-          </section>
-
-          <section className="transition-all duration-300 hover:bg-slate-50 p-6 rounded-2xl">
-            <h2 className="text-2xl font-bold text-orange-600 mb-4">8. Changes to This Policy</h2>
-            <p>
-              We may update this Privacy Policy from time to time. We will notify you of any material changes by posting 
-              the updated policy on this page.
-            </p>
-          </section>
-
-        </div>
-
-        {/* Contact Box */}
-        <div className="bg-orange-50 border-t border-orange-100 p-10 text-center">
-          <h3 className="text-xl font-semibold text-orange-700 mb-3">Questions About Your Privacy?</h3>
-          <p className="text-gray-600 mb-6">
-            Feel free to contact us at <span className="font-medium">elijahwagah990@gmail.com</span>
+  const sections = [
+    {
+      id: "1",
+      title: "Introduction",
+      content: (
+        <p>
+          ArmorCovers is committed to protecting your privacy. This Privacy
+          Policy explains how we collect, use, disclose and safeguard your
+          information when you use our marketplace platform.
+        </p>
+      ),
+    },
+    {
+      id: "2",
+      title: "Information We Collect",
+      content: (
+        <ul className="list-disc pl-5 space-y-2">
+          <li>
+            <strong className="text-slate-800">Personal information:</strong>{" "}
+            Name, email address, phone number, delivery address
+          </li>
+          <li>
+            <strong className="text-slate-800">Account information:</strong>{" "}
+            Username, password, profile details
+          </li>
+          <li>
+            <strong className="text-slate-800">Transaction data:</strong> Order
+            history and payment-related information needed to process orders
+          </li>
+          <li>
+            <strong className="text-slate-800">Usage data:</strong> IP address,
+            browser type, pages visited and device information
+          </li>
+        </ul>
+      ),
+    },
+    {
+      id: "3",
+      title: "How We Use Your Information",
+      content: (
+        <ul className="list-disc pl-5 space-y-2">
+          <li>To process transactions and manage orders</li>
+          <li>To provide customer support and respond to inquiries</li>
+          <li>To improve our platform and user experience</li>
+          <li>
+            To send important service updates and, with your consent, relevant
+            promotional content
+          </li>
+          <li>To prevent fraud and help keep the platform secure</li>
+        </ul>
+      ),
+    },
+    {
+      id: "4",
+      title: "Information Sharing",
+      content: (
+        <>
+          <p className="mb-3">
+            We do <strong className="text-slate-800">not sell</strong> your
+            personal data. We may share information with:
           </p>
-          <Link 
-            to="/contact" 
-            className="inline-block bg-orange-500 text-white px-8 py-3 rounded-2xl hover:bg-orange-600 transition"
+          <ul className="list-disc pl-5 space-y-2">
+            <li>Sellers, as needed to fulfil your orders</li>
+            <li>Payment processors (e.g. M-Pesa and other approved providers)</li>
+            <li>Legal authorities when required by applicable law</li>
+          </ul>
+        </>
+      ),
+    },
+    {
+      id: "5",
+      title: "Data Security",
+      content: (
+        <p>
+          We use industry-standard measures to help protect your information.
+          No method of transmission or storage over the internet is completely
+          secure; we continuously work to reduce risk and respond to issues
+          promptly.
+        </p>
+      ),
+    },
+    {
+      id: "6",
+      title: "Your Rights",
+      content: (
+        <ul className="list-disc pl-5 space-y-2">
+          <li>Access, correct or request deletion of your personal information</li>
+          <li>Object to or request restriction of certain processing</li>
+          <li>Withdraw consent where processing is based on consent</li>
+          <li>Request a copy of data you have provided, where applicable</li>
+        </ul>
+      ),
+    },
+    {
+      id: "7",
+      title: "Cookies",
+      content: (
+        <p>
+          We use cookies and similar technologies to support site functionality,
+          understand usage and improve the experience. You can manage cookie
+          preferences through your browser settings.
+        </p>
+      ),
+    },
+    {
+      id: "8",
+      title: "Changes to This Policy",
+      content: (
+        <p>
+          We may update this Privacy Policy from time to time. Material changes
+          will be reflected on this page with an updated “Last updated” date.
+        </p>
+      ),
+    },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
+      {/* Header */}
+      <section className="border-b border-slate-100 bg-white">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-12 sm:py-16 text-center">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center">
+            <Shield size={24} />
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 tracking-tight">
+            Privacy Policy
+          </h1>
+          <p className="mt-3 text-sm text-slate-500">
+            Last updated: 22 June 2026 · ArmorCovers Marketplace
+          </p>
+        </div>
+      </section>
+
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+        <p className="text-slate-600 text-sm leading-relaxed mb-10 pb-8 border-b border-slate-100">
+          This policy describes how ArmorCovers collects and uses information
+          when you browse, buy or sell on our marketplace.
+        </p>
+
+        <div className="space-y-10">
+          {sections.map((section) => (
+            <section key={section.id} id={`privacy-${section.id}`}>
+              <h2 className="text-lg font-bold text-slate-900 mb-3 flex items-baseline gap-2">
+                <span className="text-orange-500 font-semibold tabular-nums">
+                  {section.id}.
+                </span>
+                {section.title}
+              </h2>
+              <div className="text-slate-600 text-sm leading-relaxed pl-0 sm:pl-6">
+                {section.content}
+              </div>
+            </section>
+          ))}
+        </div>
+
+        {/* Contact */}
+        <div className="mt-14 rounded-2xl border border-slate-100 bg-white shadow-sm p-6 sm:p-8">
+          <h3 className="font-semibold text-slate-900 mb-2">
+            Questions about your privacy?
+          </h3>
+          <p className="text-sm text-slate-500 mb-5 leading-relaxed">
+            Contact us if you have questions about this policy or how we handle
+            your data.
+          </p>
+          <a
+            href="mailto:elijahwagah990@gmail.com"
+            className="inline-flex items-center gap-2 text-sm text-slate-700 hover:text-orange-600 mb-6"
           >
-            Contact Support
-          </Link>
+            <Mail size={16} className="text-orange-500" />
+            elijahwagah990@gmail.com
+          </a>
+          <div>
+            <Link
+              to="/contact"
+              className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition"
+            >
+              Contact support
+              <ArrowRight size={16} />
+            </Link>
+          </div>
         </div>
 
-        <div className="text-center py-8 text-sm text-gray-500 border-t">
-          © {new Date().getFullYear()} ArmorCovers Marketplace. All Rights Reserved.
-        </div>
-
+        <p className="text-center text-xs text-slate-400 mt-10">
+          © {new Date().getFullYear()} ArmorCovers Marketplace. All rights reserved.
+        </p>
       </div>
     </div>
   );

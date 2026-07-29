@@ -11,20 +11,27 @@ const {
   deleteProduct,
 } = require("../controllers/productController");
 
+// Shared multer config for product + multiple free gift images
+const productUpload = upload.fields([
+  { name: "image", maxCount: 1 },
+  { name: "giftImages", maxCount: 10 }, // plural – matches frontend
+]);
+
 // ===================== PRODUCT ROUTES =====================
 
 // CREATE PRODUCT
-router.post("/", upload.single("image"), createProduct);
+router.post("/", productUpload, createProduct);
 
 // GET ALL PRODUCTS
 router.get("/", getProducts);
 
-// WAREHOUSE PRODUCTS
+// WAREHOUSE PRODUCTS (with seller name + phone for WhatsApp)
 router.get("/warehouse", async (req, res) => {
   try {
     const products = await Product.find({
       type: { $in: ["warehouse", "both"] },
-    });
+    }).populate("seller", "name email phone");
+
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -34,7 +41,23 @@ router.get("/warehouse", async (req, res) => {
 // GET PRODUCTS BY CATEGORY
 router.get("/category/:category", async (req, res) => {
   try {
-    const products = await Product.find({ category: req.params.category });
+    const products = await Product.find({
+      category: req.params.category,
+    }).populate("seller", "name email phone");
+
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// GET PRODUCTS BY SELLER
+router.get("/seller/:sellerId", async (req, res) => {
+  try {
+    const products = await Product.find({
+      seller: req.params.sellerId,
+    }).populate("seller", "name email phone");
+
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -111,13 +134,21 @@ router.put("/:id/warranty", async (req, res) => {
     const { warranty, warrantyMonths } = req.body;
 
     // Enable warranty
-    if (warranty === true || warranty === "true" || Number(warrantyMonths) > 0) {
+    if (
+      warranty === true ||
+      warranty === "true" ||
+      Number(warrantyMonths) > 0
+    ) {
       product.warranty = true;
       product.warrantyMonths = Number(warrantyMonths) || 12;
     }
 
     // Remove warranty
-    if (warranty === false || warranty === "false" || Number(warrantyMonths) === 0) {
+    if (
+      warranty === false ||
+      warranty === "false" ||
+      Number(warrantyMonths) === 0
+    ) {
       product.warranty = false;
       product.warrantyMonths = 0;
     }
@@ -144,8 +175,8 @@ router.put("/:id/warranty", async (req, res) => {
 // GET SINGLE PRODUCT
 router.get("/:id", getProductById);
 
-// UPDATE PRODUCT (also accepts warranty fields)
-router.put("/:id", upload.single("image"), updateProduct);
+// UPDATE PRODUCT
+router.put("/:id", productUpload, updateProduct);
 
 // DELETE PRODUCT
 router.delete("/:id", deleteProduct);

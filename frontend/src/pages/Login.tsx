@@ -38,23 +38,41 @@ const Login = () => {
         password: password.trim(),
       });
 
-      // Save auth data
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+      // Support both res.data.user and flat response shapes
+      const u = res.data.user || res.data;
+      const userId = u._id || u.id;
 
-      console.log("✅ Login successful. Role:", res.data.user.role);
+      // ✅ Store id, _id, phone for products + WhatsApp
+      const userData = {
+        id: userId,
+        _id: userId,
+        name: u.name,
+        email: u.email,
+        phone: u.phone || "",
+        role: u.role || res.data.role,
+      };
+
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(userData));
+
+      console.log("✅ Login successful");
+      console.log("🔑 User ID:", userId);
+      console.log("🔑 Role:", userData.role);
+      console.log("📱 Phone:", userData.phone);
 
       // Redirect based on role
+      const role = userData.role;
       const redirectMap: { [key: string]: string } = {
         admin: "/admin-dashboard",
         seller: "/seller-dashboard",
         vendor: "/seller-dashboard",
         buyer: "/buyer-dashboard",
       };
-      const redirectPath = redirectMap[res.data.user.role] || "/";
+      const redirectPath = redirectMap[role] || "/";
       navigate(redirectPath, { replace: true });
     } catch (err: any) {
-      const message = err.response?.data?.message || "Invalid email or password";
+      const message =
+        err.response?.data?.message || "Invalid email or password";
       setError(message);
       console.error("LOGIN ERROR:", err.response?.data || err.message);
     } finally {
@@ -66,12 +84,16 @@ const Login = () => {
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-10">
-          <h1 className="text-4xl font-bold text-orange-500 tracking-tight">ARMORCOVERS</h1>
+          <h1 className="text-4xl font-bold text-orange-500 tracking-tight">
+            ARMORCOVERS
+          </h1>
           <p className="text-gray-600 mt-2">Sign in to your account</p>
         </div>
 
         <div className="bg-white rounded-3xl shadow-xl p-10">
-          <h2 className="text-2xl font-semibold mb-8 text-center">Welcome Back</h2>
+          <h2 className="text-2xl font-semibold mb-8 text-center">
+            Welcome Back
+          </h2>
 
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-2xl mb-6 text-sm">
@@ -81,7 +103,9 @@ const Login = () => {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
               <input
                 type="email"
                 value={email}
@@ -93,7 +117,9 @@ const Login = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
               <input
                 type="password"
                 value={password}
@@ -116,7 +142,10 @@ const Login = () => {
           <div className="mt-8 text-center text-sm">
             <p className="text-gray-600">
               Don't have an account?{" "}
-              <Link to="/register" className="text-orange-600 font-medium hover:underline">
+              <Link
+                to="/register"
+                className="text-orange-600 font-medium hover:underline"
+              >
                 Create one here
               </Link>
             </p>

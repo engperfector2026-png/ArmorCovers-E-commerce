@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
-import { Upload, FileText, IdCard, Shield } from "lucide-react";
+import { Upload, Shield } from "lucide-react";
 
 const Register = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
     password: "",
     role: "buyer",
   });
@@ -48,6 +49,14 @@ const Register = () => {
       setLoading(true);
       setError("");
 
+      // Basic Kenya phone check (optional but helpful)
+      const phoneDigits = formData.phone.replace(/\D/g, "");
+      if (formData.phone && phoneDigits.length < 9) {
+        setError("Please enter a valid phone number (e.g. 0712345678)");
+        setLoading(false);
+        return;
+      }
+
       if (isSeller) {
         if (
           !docs.passport ||
@@ -64,6 +73,7 @@ const Register = () => {
         const data = new FormData();
         data.append("name", formData.name);
         data.append("email", formData.email);
+        data.append("phone", formData.phone);
         data.append("password", formData.password);
         data.append("role", formData.role);
         data.append("passport", docs.passport);
@@ -76,7 +86,13 @@ const Register = () => {
           headers: { "Content-Type": "multipart/form-data" },
         });
       } else {
-        await axios.post("http://localhost:5000/api/auth/register", formData);
+        await axios.post("http://localhost:5000/api/auth/register", {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+          role: formData.role,
+        });
       }
 
       alert("✅ Registration successful! You can now login.");
@@ -119,10 +135,16 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-6">
-      <div className={`w-full transition-all duration-300 ${isSeller ? "max-w-2xl" : "max-w-md"}`}>
+      <div
+        className={`w-full transition-all duration-300 ${
+          isSeller ? "max-w-2xl" : "max-w-md"
+        }`}
+      >
         <div className="bg-white rounded-3xl shadow-xl p-8 md:p-10">
           <h2 className="text-3xl font-bold text-center mb-2">Create Account</h2>
-          <p className="text-gray-600 text-center mb-8">Join ArmorCovers Marketplace</p>
+          <p className="text-gray-600 text-center mb-8">
+            Join ArmorCovers Marketplace
+          </p>
 
           {error && (
             <div className="bg-red-50 text-red-600 p-4 rounded-2xl mb-6 text-center text-sm">
@@ -132,7 +154,9 @@ const Register = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block mb-2 text-slate-700 font-medium">Full Name</label>
+              <label className="block mb-2 text-slate-700 font-medium">
+                Full Name
+              </label>
               <input
                 type="text"
                 name="name"
@@ -145,7 +169,9 @@ const Register = () => {
             </div>
 
             <div>
-              <label className="block mb-2 text-slate-700 font-medium">Email</label>
+              <label className="block mb-2 text-slate-700 font-medium">
+                Email
+              </label>
               <input
                 type="email"
                 name="email"
@@ -157,8 +183,32 @@ const Register = () => {
               />
             </div>
 
+            {/* Phone — used for WhatsApp contact */}
             <div>
-              <label className="block mb-2 text-slate-700 font-medium">Password</label>
+              <label className="block mb-2 text-slate-700 font-medium">
+                Phone Number{" "}
+                {isSeller && <span className="text-red-500">*</span>}
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                className="w-full px-4 py-4 rounded-2xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="e.g. 0712345678"
+                required={isSeller}
+              />
+              {isSeller && (
+                <p className="text-xs text-slate-500 mt-1.5">
+                  This number will be used for WhatsApp contact from buyers
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block mb-2 text-slate-700 font-medium">
+                Password
+              </label>
               <input
                 type="password"
                 name="password"
@@ -171,7 +221,9 @@ const Register = () => {
             </div>
 
             <div>
-              <label className="block mb-2 text-slate-700 font-medium">Register As</label>
+              <label className="block mb-2 text-slate-700 font-medium">
+                Register As
+              </label>
               <select
                 name="role"
                 value={formData.role}
@@ -183,9 +235,9 @@ const Register = () => {
               </select>
             </div>
 
-            {/* ===== SELLER DOCUMENTS (expands when seller selected) ===== */}
+            {/* ===== SELLER DOCUMENTS ===== */}
             {isSeller && (
-              <div className="border border-orange-100 bg-orange-50/50 rounded-2xl p-5 space-y-4 animate-in fade-in">
+              <div className="border border-orange-100 bg-orange-50/50 rounded-2xl p-5 space-y-4">
                 <div className="flex items-center gap-2 mb-1">
                   <Shield size={20} className="text-orange-600" />
                   <h3 className="font-semibold text-slate-800">
@@ -193,7 +245,8 @@ const Register = () => {
                   </h3>
                 </div>
                 <p className="text-xs text-slate-500 mb-3">
-                  Upload clear images or PDFs. National ID requires both front and back.
+                  Upload clear images or PDFs. National ID requires both front
+                  and back.
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -240,7 +293,10 @@ const Register = () => {
           <div className="mt-8 text-center">
             <p className="text-slate-600">
               Already have an account?{" "}
-              <Link to="/login" className="text-orange-500 font-semibold hover:underline">
+              <Link
+                to="/login"
+                className="text-orange-500 font-semibold hover:underline"
+              >
                 Login
               </Link>
             </p>

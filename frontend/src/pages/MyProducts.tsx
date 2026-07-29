@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from 'react-router-dom';
-import { Package, Edit2, Trash2 } from 'lucide-react';
-import API from '../api/axios';
+import { useNavigate } from "react-router-dom";
+import { Package, Edit2, Trash2 } from "lucide-react";
+import API from "../api/axios";
 
 interface Product {
   _id: string;
@@ -11,6 +11,7 @@ interface Product {
   price: number;
   stock: number;
   image?: string;
+  seller?: string | { _id?: string; id?: string };
 }
 
 function MyProducts() {
@@ -18,6 +19,19 @@ function MyProducts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const navigate = useNavigate();
+
+  const getCurrentUserId = (): string | null => {
+    try {
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      return user._id || user.id || user.userId || null;
+    } catch {
+      return null;
+    }
+  };
+
+  const getToken = (): string | null => {
+    return localStorage.getItem("token");
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -28,11 +42,32 @@ function MyProducts() {
       setLoading(true);
       setError("");
 
-      const res = await API.get("/products");
-      setProducts(res.data);
+      const token = getToken();
+      const sellerId = getCurrentUserId();
+
+      if (!token || !sellerId) {
+        setError("Please log in to view your products.");
+        setProducts([]);
+        setLoading(false);
+        return;
+      }
+
+      // Only this seller's products
+      const res = await API.get(`/products/seller/${sellerId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setProducts(Array.isArray(res.data) ? res.data : []);
     } catch (err: any) {
       console.error("Failed to load products:", err);
-      setError("Failed to load products. Please make sure your backend is running.");
+      if (err.response?.status === 401) {
+        setError("Session expired. Please log in again.");
+      } else {
+        setError(
+          "Failed to load products. Please make sure your backend is running."
+        );
+      }
+      setProducts([]);
     } finally {
       setLoading(false);
     }
@@ -41,13 +76,38 @@ function MyProducts() {
   const deleteProduct = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
 
+    const token = getToken();
+
+    if (!token) {
+      alert("Please log in again to delete products.");
+      navigate("/login");
+      return;
+    }
+
     try {
-      await API.delete(`/products/${id}`);
+      await API.delete(`/products/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       alert("✅ Product deleted successfully");
-      fetchProducts();
-    } catch (error) {
+      // Update UI without full refetch
+      setProducts((prev) => prev.filter((p) => p._id !== id));
+    } catch (error: any) {
       console.error(error);
-      alert("❌ Failed to delete product");
+      const status = error.response?.status;
+      const msg =
+        error.response?.data?.message || "Failed to delete product";
+
+      if (status === 401) {
+        alert("Session expired or not authorized. Please log in again.");
+        navigate("/login");
+      } else if (status === 403) {
+        alert("You can only delete your own products.");
+      } else {
+        alert(`❌ ${msg}`);
+      }
     }
   };
 
@@ -62,7 +122,7 @@ function MyProducts() {
           </div>
 
           <button
-            onClick={() => navigate('/add-product')}
+            onClick={() => navigate("/add-product")}
             className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-2xl flex items-center gap-3 font-semibold transition"
           >
             <Package size={24} />
@@ -71,23 +131,38 @@ function MyProducts() {
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-2xl mb-8">
-            {error}
+          <div className="bg-red-50 border border-red-200 text-red-600 p-4 rounded-2xl mb-8 flex flex-wrap items-center justify-between gap-3">
+            <span>{error}</span>
+            {(error.includes("log in") || error.includes("Session")) && (
+              <button
+                onClick={() => navigate("/login")}
+                className="bg-red-600 text-white px-4 py-2 rounded-xl text-sm font-medium"
+              >
+                Go to Login
+              </button>
+            )}
           </div>
         )}
 
         {loading ? (
           <div className="bg-white rounded-3xl shadow-sm p-20 text-center">
-            <Package size={60} className="mx-auto text-orange-500 mb-4 animate-pulse" />
+            <Package
+              size={60}
+              className="mx-auto text-orange-500 mb-4 animate-pulse"
+            />
             <p className="text-xl text-gray-600">Loading your products...</p>
           </div>
-        ) : products.length === 0 ? (
+        ) : products.length === 0 && !error ? (
           <div className="bg-white rounded-3xl shadow-sm p-16 text-center">
             <div className="text-7xl mb-6">📦</div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">No Products Yet</h2>
-            <p className="text-gray-600 mb-8">Start selling by adding your first product</p>
+            <h2 className="text-3xl font-bold text-gray-900 mb-3">
+              No Products Yet
+            </h2>
+            <p className="text-gray-600 mb-8">
+              Start selling by adding your first product
+            </p>
             <button
-              onClick={() => navigate('/add-product')}
+              onClick={() => navigate("/add-product")}
               className="bg-orange-500 text-white px-8 py-4 rounded-2xl font-semibold text-lg"
             >
               Add Your First Product
@@ -100,7 +175,6 @@ function MyProducts() {
                 key={product._id}
                 className="bg-white rounded-3xl shadow-sm overflow-hidden hover:shadow-md transition"
               >
-                {/* Image Section */}
                 <div className="h-56 bg-slate-100 relative overflow-hidden">
                   {product.image ? (
                     <img
@@ -108,7 +182,8 @@ function MyProducts() {
                       alt={product.name}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.currentTarget.src = "https://via.placeholder.com/400x300?text=No+Image";
+                        e.currentTarget.src =
+                          "https://via.placeholder.com/400x300?text=No+Image";
                       }}
                     />
                   ) : (
@@ -128,18 +203,22 @@ function MyProducts() {
                   </h3>
 
                   <p className="text-orange-600 font-semibold mt-2 text-2xl">
-                    KSh {product.price.toLocaleString()}
+                    KSh {Number(product.price).toLocaleString()}
                   </p>
 
-                  <p className="text-sm text-gray-500 mt-1">Stock: {product.stock}</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Stock: {product.stock}
+                  </p>
 
                   <p className="text-gray-600 text-sm mt-4 line-clamp-3">
                     {product.description}
                   </p>
 
                   <div className="flex gap-3 mt-6">
-                    <button 
-                      onClick={() => navigate(`/edit-product/${product._id}`)}
+                    <button
+                      onClick={() =>
+                        navigate(`/edit-product/${product._id}`)
+                      }
                       className="flex-1 flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 py-3 rounded-2xl font-medium transition"
                     >
                       <Edit2 size={18} />

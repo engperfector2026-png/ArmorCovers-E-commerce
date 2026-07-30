@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { ShoppingCart, LogOut, User, Menu, X } from "lucide-react";
+import { ShoppingCart, ShoppingBag, LogOut, User, Menu, X } from "lucide-react";
 import { useState } from "react";
 
 const Navbar = () => {
@@ -29,15 +29,14 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 py-3">
         <div className="flex items-center justify-between gap-3">
           
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 flex-shrink-0">
-            <div className="w-9 h-9 bg-orange-600 rounded-xl flex items-center justify-center text-white font-bold text-2xl">
-              A
+          {/* Logo – ArmorCovers brand mark */}
+          <Link to="/" className="flex items-center gap-2.5 flex-shrink-0 group">
+            <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center shadow-sm group-hover:bg-orange-600 transition-colors">
+              <ShoppingBag size={20} className="text-white" strokeWidth={2.25} />
             </div>
-            <div className="text-xl md:text-2xl font-bold tracking-tight">
-              <span className="text-gray-900">ARMOR</span>
-              <span className="text-orange-600">COVERS</span>
-            </div>
+            <span className="text-xl md:text-2xl font-bold tracking-tight text-slate-900">
+              Armor<span className="text-orange-500">Covers</span>
+            </span>
           </Link>
 
           {/* Desktop Search */}

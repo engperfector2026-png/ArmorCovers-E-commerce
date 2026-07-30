@@ -31,7 +31,8 @@ interface WarehouseProduct {
   image?: string;
   minimumOrder: number;
   category: string;
-  subcategory?: string;
+  subcategory?: string;   // preferred (matches EditProduct / MyProducts / ProductDetails)
+  subCategory?: string;    // legacy support
   seller?: string | SellerInfo;
   // Free Gift
   hasFreeGift?: boolean;
@@ -194,6 +195,12 @@ function Warehouse() {
     },
   ];
 
+  // Normalize subcategory (supports both field names)
+  const getSubcategory = (p: WarehouseProduct): string => {
+    const sub = p.subcategory || p.subCategory || "";
+    return sub && sub !== "All" ? sub : "";
+  };
+
   useEffect(() => {
     const fetchWarehouseProducts = async () => {
       try {
@@ -306,7 +313,8 @@ function Warehouse() {
     if (!selectedMainCategory) return true;
     if (product.category !== selectedMainCategory) return false;
     if (selectedSubCategory === "All") return true;
-    return product.subcategory === selectedSubCategory;
+    const sub = product.subcategory || product.subCategory || "";
+    return sub === selectedSubCategory;
   });
 
   const currentMain = mainCategories.find(
@@ -441,6 +449,9 @@ function Warehouse() {
           {filteredProducts.length} warehouse{" "}
           {filteredProducts.length === 1 ? "item" : "items"}
           {selectedMainCategory ? ` in ${selectedMainCategory}` : ""}
+          {selectedSubCategory && selectedSubCategory !== "All"
+            ? ` › ${selectedSubCategory}`
+            : ""}
         </p>
 
         {/* Product grid */}
@@ -454,6 +465,7 @@ function Warehouse() {
               const sellerName = getSellerName(product);
               const lineTotal = unitPrice * qty;
               const onGift = hasFreeGift(product);
+              const subcategory = getSubcategory(product);
 
               return (
                 <div
@@ -500,6 +512,18 @@ function Warehouse() {
 
                   {/* Body */}
                   <div className="p-3 flex-1 flex flex-col">
+                    {/* Category + Subcategory badges */}
+                    <div className="flex flex-wrap gap-1 mb-1.5">
+                      <span className="inline-block bg-orange-100 text-orange-600 text-[10px] font-medium px-2 py-0.5 rounded-full">
+                        {product.category || "Uncategorized"}
+                      </span>
+                      {subcategory && (
+                        <span className="inline-block bg-slate-100 text-slate-600 text-[10px] font-medium px-2 py-0.5 rounded-full">
+                          {subcategory}
+                        </span>
+                      )}
+                    </div>
+
                     <Link to={`/products/${product._id}`}>
                       <h3 className="font-semibold text-[13px] sm:text-sm line-clamp-2 leading-snug text-slate-800 group-hover:text-orange-600 transition-colors">
                         {product.name}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { ArrowLeft, Upload, Gift, X, Plus } from "lucide-react";
@@ -11,6 +11,138 @@ interface GiftItem {
   preview: string;
 }
 
+interface SubCategory {
+  name: string;
+  value: string;
+}
+
+interface MainCategory {
+  name: string;
+  subcategories: SubCategory[];
+}
+
+// MUST match Shop.tsx exactly
+const MAIN_CATEGORIES: MainCategory[] = [
+  {
+    name: "Electronics",
+    subcategories: [
+      { name: "All Electronics", value: "All" },
+      { name: "Consumer Electronics", value: "Consumer Electronics" },
+      { name: "Computing & Office Electronics", value: "Computing & Office Electronics" },
+      { name: "Gaming & Entertainment", value: "Gaming & Entertainment" },
+      { name: "Home & Kitchen Electronics", value: "Home & Kitchen Electronics" },
+      { name: "Electrical & Power", value: "Electrical & Power" },
+      { name: "Tools & Industrial Electronics", value: "Tools & Industrial Electronics" },
+      { name: "Automotive Electronics", value: "Automotive Electronics" },
+    ],
+  },
+  {
+    name: "Vehicles",
+    subcategories: [
+      { name: "All Vehicles", value: "All" },
+      { name: "Car Covers & Protection", value: "Car Covers & Protection" },
+      { name: "Motorcycle & Bike Covers", value: "Motorcycle & Bike Covers" },
+      { name: "Vehicle Accessories", value: "Vehicle Accessories" },
+      { name: "Truck & Heavy Vehicle Covers", value: "Truck & Heavy Vehicle Covers" },
+      { name: "Interior Protection", value: "Interior Protection" },
+      { name: "Car Electronics", value: "Car Electronics" },
+    ],
+  },
+  {
+    name: "Fashion",
+    subcategories: [
+      { name: "All Fashion", value: "All" },
+      { name: "Men's Clothing", value: "Men's Clothing" },
+      { name: "Women's Clothing", value: "Women's Clothing" },
+      { name: "Kids & Baby Fashion", value: "Kids & Baby Fashion" },
+      { name: "Footwear", value: "Footwear" },
+      { name: "Bags & Accessories", value: "Bags & Accessories" },
+      { name: "Traditional & Cultural Wear", value: "Traditional & Cultural Wear" },
+    ],
+  },
+  {
+    name: "Home",
+    subcategories: [
+      { name: "All Home", value: "All" },
+      { name: "Furniture & Decor", value: "Furniture & Decor" },
+      { name: "Home Textiles & Bedding", value: "Home Textiles & Bedding" },
+      { name: "Kitchen & Dining", value: "Kitchen & Dining" },
+      { name: "Home Improvement", value: "Home Improvement" },
+      { name: "Lighting & Electricals", value: "Lighting & Electricals" },
+      { name: "Garden & Outdoor", value: "Garden & Outdoor" },
+    ],
+  },
+  {
+    name: "Agriculture",
+    subcategories: [
+      { name: "All Agriculture", value: "All" },
+      { name: "Farming Tools & Equipment", value: "Farming Tools & Equipment" },
+      { name: "Seeds & Fertilizers", value: "Seeds & Fertilizers" },
+      { name: "Irrigation Systems", value: "Irrigation Systems" },
+      { name: "Protective Covers & Nets", value: "Protective Covers & Nets" },
+      { name: "Animal Husbandry", value: "Animal Husbandry" },
+      { name: "Harvesting & Storage", value: "Harvesting & Storage" },
+    ],
+  },
+  {
+    name: "Beauty",
+    subcategories: [
+      { name: "All Beauty", value: "All" },
+      { name: "Skincare", value: "Skincare" },
+      { name: "Hair Care", value: "Hair Care" },
+      { name: "Makeup & Cosmetics", value: "Makeup & Cosmetics" },
+      { name: "Fragrances", value: "Fragrances" },
+      { name: "Personal Care", value: "Personal Care" },
+      { name: "Beauty Tools & Devices", value: "Beauty Tools & Devices" },
+    ],
+  },
+  {
+    name: "Sports",
+    subcategories: [
+      { name: "All Sports", value: "All" },
+      { name: "Fitness Equipment", value: "Fitness Equipment" },
+      { name: "Outdoor Sports", value: "Outdoor Sports" },
+      { name: "Team Sports", value: "Team Sports" },
+      { name: "Sports Apparel & Gear", value: "Sports Apparel & Gear" },
+      { name: "Camping & Hiking", value: "Camping & Hiking" },
+      { name: "Sports Protection", value: "Sports Protection" },
+    ],
+  },
+  {
+    name: "Health",
+    subcategories: [
+      { name: "All Health", value: "All" },
+      { name: "Medical Supplies", value: "Medical Supplies" },
+      { name: "Supplements & Nutrition", value: "Supplements & Nutrition" },
+      { name: "Personal Hygiene", value: "Personal Hygiene" },
+      { name: "Fitness & Wellness", value: "Fitness & Wellness" },
+      { name: "First Aid & Safety", value: "First Aid & Safety" },
+    ],
+  },
+  {
+    name: "Stationary",
+    subcategories: [
+      { name: "All Stationary", value: "All" },
+      { name: "Writing Instruments", value: "Writing Instruments" },
+      { name: "Notebooks & Paper", value: "Notebooks & Paper" },
+      { name: "Office Supplies", value: "Office Supplies" },
+      { name: "Art & Craft Supplies", value: "Art & Craft Supplies" },
+      { name: "School Supplies", value: "School Supplies" },
+    ],
+  },
+  {
+    name: "Education",
+    subcategories: [
+      { name: "All Education", value: "All" },
+      { name: "Books & Textbooks", value: "Books & Textbooks" },
+      { name: "Learning Materials", value: "Learning Materials" },
+      { name: "Educational Toys", value: "Educational Toys" },
+      { name: "School Furniture", value: "School Furniture" },
+      { name: "E-Learning Devices", value: "E-Learning Devices" },
+    ],
+  },
+];
+
 const AddProduct = () => {
   const navigate = useNavigate();
 
@@ -18,7 +150,6 @@ const AddProduct = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState("");
 
-  // Multiple free gifts
   const [hasFreeGift, setHasFreeGift] = useState(false);
   const [gifts, setGifts] = useState<GiftItem[]>([
     { id: crypto.randomUUID(), name: "", description: "", file: null, preview: "" },
@@ -28,12 +159,18 @@ const AddProduct = () => {
     name: "",
     description: "",
     category: "",
+    subcategory: "",
     price: "",
     wholesalePrice: "",
     stock: "1",
     minimumOrder: "1",
     type: "retail",
   });
+
+  const subcategories = useMemo(() => {
+    const main = MAIN_CATEGORIES.find((c) => c.name === product.category);
+    return main?.subcategories || [];
+  }, [product.category]);
 
   const addGift = () => {
     setGifts((prev) => [
@@ -44,7 +181,7 @@ const AddProduct = () => {
 
   const removeGift = (id: string) => {
     setGifts((prev) => {
-      if (prev.length <= 1) return prev; // keep at least one when enabled
+      if (prev.length <= 1) return prev;
       return prev.filter((g) => g.id !== id);
     });
   };
@@ -54,11 +191,7 @@ const AddProduct = () => {
       prev.map((g) => {
         if (g.id !== id) return g;
         if (field === "file" && value instanceof File) {
-          return {
-            ...g,
-            file: value,
-            preview: URL.createObjectURL(value),
-          };
+          return { ...g, file: value, preview: URL.createObjectURL(value) };
         }
         if (field === "file" && value === null) {
           return { ...g, file: null, preview: "" };
@@ -68,8 +201,25 @@ const AddProduct = () => {
     );
   };
 
+  const handleCategoryChange = (category: string) => {
+    setProduct({
+      ...product,
+      category,
+      subcategory: "",
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (!product.category) {
+      alert("Please select a category.");
+      return;
+    }
+    if (!product.subcategory || product.subcategory === "All") {
+      alert("Please select a specific subcategory.");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -79,6 +229,7 @@ const AddProduct = () => {
       formData.append("name", product.name);
       formData.append("description", product.description);
       formData.append("category", product.category);
+      formData.append("subcategory", product.subcategory);
       formData.append("price", product.price);
       formData.append("wholesalePrice", product.wholesalePrice || "");
       formData.append("stock", product.stock);
@@ -89,11 +240,9 @@ const AddProduct = () => {
         formData.append("image", selectedFile);
       }
 
-      // ===== MULTIPLE FREE GIFTS =====
       formData.append("hasFreeGift", String(hasFreeGift));
 
       if (hasFreeGift) {
-        // Validate: every gift needs a name
         const invalid = gifts.some((g) => !g.name.trim());
         if (invalid) {
           alert("Please fill in a name for every free gift.");
@@ -101,22 +250,17 @@ const AddProduct = () => {
           return;
         }
 
-        // Send gift metadata as JSON (order matches giftImages)
         const giftsMeta = gifts.map((g) => ({
           name: g.name.trim(),
           description: g.description.trim(),
         }));
         formData.append("gifts", JSON.stringify(giftsMeta));
 
-        // Append each gift image under the same field name "giftImages"
         gifts.forEach((g) => {
-          if (g.file) {
-            formData.append("giftImages", g.file);
-          }
+          if (g.file) formData.append("giftImages", g.file);
         });
       }
 
-      // Seller ID
       const user = JSON.parse(localStorage.getItem("user") || "{}");
       const sellerId = user._id || user.id || user.userId || "";
 
@@ -130,19 +274,14 @@ const AddProduct = () => {
 
       const token = localStorage.getItem("token");
 
-      const res = await axios.post(
-        "http://localhost:5000/api/products",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        }
-      );
+      const res = await axios.post("http://localhost:5000/api/products", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
 
       console.log("✅ Product created:", res.data);
-
       alert("✅ Product Added Successfully");
       navigate("/seller-dashboard");
     } catch (error: any) {
@@ -171,15 +310,12 @@ const AddProduct = () => {
 
         <div className="bg-white rounded-3xl shadow p-10">
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* ===== BASIC PRODUCT INFO ===== */}
             <div>
               <label className="block text-gray-700 mb-2">Product Name</label>
               <input
                 type="text"
                 value={product.name}
-                onChange={(e) =>
-                  setProduct({ ...product, name: e.target.value })
-                }
+                onChange={(e) => setProduct({ ...product, name: e.target.value })}
                 className="w-full px-5 py-4 rounded-2xl border focus:border-orange-500 focus:outline-none"
                 required
               />
@@ -199,67 +335,76 @@ const AddProduct = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label className="block text-gray-700 mb-2">Category</label>
+                <label className="block text-gray-700 mb-2">Main Category *</label>
                 <select
                   value={product.category}
-                  onChange={(e) =>
-                    setProduct({ ...product, category: e.target.value })
-                  }
+                  onChange={(e) => handleCategoryChange(e.target.value)}
                   className="w-full px-5 py-4 rounded-2xl border focus:border-orange-500 focus:outline-none"
                   required
                 >
                   <option value="">Select Category</option>
-                  <option value="Vehicles">Vehicles</option>
-                  <option value="Fashion">Fashion</option>
-                  <option value="Electronics">Electronics</option>
-                  <option value="Home">Home</option>
-                  <option value="Agriculture">Agriculture</option>
-                  <option value="Beauty">Beauty</option>
-                  <option value="Sports">Sports</option>
-                  <option value="Health">Health</option>
-                  <option value="Stationary">Stationary</option>
-                  <option value="Education">Education</option>
+                  {MAIN_CATEGORIES.map((cat) => (
+                    <option key={cat.name} value={cat.name}>
+                      {cat.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-gray-700 mb-2">Product Type</label>
+                <label className="block text-gray-700 mb-2">Subcategory *</label>
                 <select
-                  value={product.type}
+                  value={product.subcategory}
                   onChange={(e) =>
-                    setProduct({ ...product, type: e.target.value })
+                    setProduct({ ...product, subcategory: e.target.value })
                   }
-                  className="w-full px-5 py-4 rounded-2xl border focus:border-orange-500 focus:outline-none"
+                  className="w-full px-5 py-4 rounded-2xl border focus:border-orange-500 focus:outline-none disabled:bg-gray-100 disabled:text-gray-400"
                   required
+                  disabled={!product.category}
                 >
-                  <option value="retail">Retail Only</option>
-                  <option value="wholesale">Wholesale Only</option>
-                  <option value="both">Both Retail & Wholesale</option>
-                  <option value="warehouse">Warehouse (Bulk)</option>
+                  <option value="">
+                    {product.category ? "Select Subcategory" : "Select category first"}
+                  </option>
+                  {subcategories
+                    .filter((s) => s.value !== "All")
+                    .map((sub) => (
+                      <option key={sub.value} value={sub.value}>
+                        {sub.name}
+                      </option>
+                    ))}
                 </select>
               </div>
             </div>
 
+            <div>
+              <label className="block text-gray-700 mb-2">Product Type</label>
+              <select
+                value={product.type}
+                onChange={(e) => setProduct({ ...product, type: e.target.value })}
+                className="w-full px-5 py-4 rounded-2xl border focus:border-orange-500 focus:outline-none"
+                required
+              >
+                <option value="retail">Retail Only</option>
+                <option value="wholesale">Wholesale Only</option>
+                <option value="both">Both Retail & Wholesale</option>
+                <option value="warehouse">Warehouse (Bulk)</option>
+              </select>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label className="block text-gray-700 mb-2">
-                  Retail Price (KSh)
-                </label>
+                <label className="block text-gray-700 mb-2">Retail Price (KSh)</label>
                 <input
                   type="number"
                   value={product.price}
-                  onChange={(e) =>
-                    setProduct({ ...product, price: e.target.value })
-                  }
+                  onChange={(e) => setProduct({ ...product, price: e.target.value })}
                   className="w-full px-5 py-4 rounded-2xl border focus:border-orange-500 focus:outline-none"
                   required
                   min="1"
                 />
               </div>
               <div>
-                <label className="block text-gray-700 mb-2">
-                  Wholesale Price (KSh)
-                </label>
+                <label className="block text-gray-700 mb-2">Wholesale Price (KSh)</label>
                 <input
                   type="number"
                   value={product.wholesalePrice}
@@ -278,9 +423,7 @@ const AddProduct = () => {
                 <input
                   type="number"
                   value={product.stock}
-                  onChange={(e) =>
-                    setProduct({ ...product, stock: e.target.value })
-                  }
+                  onChange={(e) => setProduct({ ...product, stock: e.target.value })}
                   className="w-full px-5 py-4 rounded-2xl border focus:border-orange-500 focus:outline-none"
                   required
                   min="1"
@@ -301,7 +444,6 @@ const AddProduct = () => {
               </div>
             </div>
 
-            {/* ===== PRODUCT IMAGE ===== */}
             <div>
               <label className="block text-gray-700 mb-2">Product Image</label>
               <div className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center">
@@ -338,7 +480,6 @@ const AddProduct = () => {
               )}
             </div>
 
-            {/* ===== FREE GIFTS SECTION (MULTIPLE) ===== */}
             <div className="border-t border-gray-200 pt-8">
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
@@ -346,9 +487,7 @@ const AddProduct = () => {
                     <Gift className="text-orange-600" size={20} />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800">
-                      Free Gifts
-                    </h3>
+                    <h3 className="text-lg font-semibold text-gray-800">Free Gifts</h3>
                     <p className="text-sm text-gray-500">
                       Add one or more free gifts with this product
                     </p>
@@ -395,7 +534,6 @@ const AddProduct = () => {
                             type="button"
                             onClick={() => removeGift(gift.id)}
                             className="w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 flex items-center justify-center transition"
-                            title="Remove gift"
                           >
                             <X size={16} />
                           </button>
@@ -409,9 +547,7 @@ const AddProduct = () => {
                         <input
                           type="text"
                           value={gift.name}
-                          onChange={(e) =>
-                            updateGift(gift.id, "name", e.target.value)
-                          }
+                          onChange={(e) => updateGift(gift.id, "name", e.target.value)}
                           placeholder="e.g. Free Phone Case / Free Cap"
                           className="w-full px-4 py-3 rounded-xl border border-orange-200 focus:border-orange-500 focus:outline-none bg-white text-sm"
                           required={hasFreeGift}
@@ -452,9 +588,7 @@ const AddProduct = () => {
                             className="cursor-pointer flex flex-col items-center"
                           >
                             <Upload size={28} className="text-orange-400 mb-2" />
-                            <p className="text-gray-600 text-xs">
-                              Upload gift image
-                            </p>
+                            <p className="text-gray-600 text-xs">Upload gift image</p>
                           </label>
                         </div>
 
@@ -462,7 +596,7 @@ const AddProduct = () => {
                           <div className="mt-3 relative inline-block">
                             <img
                               src={gift.preview}
-                              alt={`Gift ${index + 1} Preview`}
+                              alt={`Gift ${index + 1}`}
                               className="w-24 h-24 object-cover rounded-xl border border-orange-200"
                             />
                             <button
@@ -490,7 +624,6 @@ const AddProduct = () => {
               )}
             </div>
 
-            {/* ===== ACTIONS ===== */}
             <div className="flex gap-4 mt-10">
               <button
                 type="button"

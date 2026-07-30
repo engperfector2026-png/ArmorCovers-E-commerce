@@ -33,6 +33,7 @@ interface Product {
   name: string;
   description: string;
   category: string;
+  subcategory?: string;
   subCategory?: string;
   price: number;
   stock: number;
@@ -47,7 +48,6 @@ interface Product {
   flashSaleStock?: number;
   warranty?: boolean | number | string;
   warrantyMonths?: number;
-  // Free Gift (new + legacy)
   hasFreeGift?: boolean;
   gifts?: FreeGift[];
   giftName?: string;
@@ -73,6 +73,29 @@ const categories = [
   { name: "Education", icon: "📚" },
 ];
 
+const API_BASE = "http://localhost:5000";
+
+/** Handles all common image path formats from the backend */
+const getImageUrl = (image?: string | null): string => {
+  if (!image || !String(image).trim()) {
+    return "https://via.placeholder.com/400x300?text=No+Image";
+  }
+  const img = String(image).trim();
+
+  // Already a full URL
+  if (img.startsWith("http://") || img.startsWith("https://")) {
+    return img;
+  }
+
+  // Absolute path from server root
+  if (img.startsWith("/")) {
+    return `${API_BASE}${img}`;
+  }
+
+  // Relative path (e.g. uploads/xxx.jpg)
+  return `${API_BASE}/${img}`;
+};
+
 function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -93,6 +116,12 @@ function ProductDetails() {
     minutes: 0,
     seconds: 0,
   });
+
+  const getSubcategory = (p: Product | null): string => {
+    if (!p) return "";
+    const sub = p.subcategory || p.subCategory || "";
+    return sub && sub !== "All" ? sub : "";
+  };
 
   const isOnFlashSale = (p: Product | null) => {
     if (!p?.isFlashSale || !p.flashSalePrice) return false;
@@ -120,11 +149,9 @@ function ProductDetails() {
     return "12 Months";
   };
 
-  // Supports new gifts[] array + legacy single gift fields
   const getFreeGifts = (p: Product | null): FreeGift[] => {
     if (!p || p.hasFreeGift === false) return [];
 
-    // New format: gifts array
     if (Array.isArray(p.gifts) && p.gifts.length > 0) {
       return p.gifts
         .filter((g) => g && g.name && String(g.name).trim())
@@ -135,7 +162,6 @@ function ProductDetails() {
         }));
     }
 
-    // Legacy: nested gift object
     if (p.gift?.name) {
       return [
         {
@@ -146,7 +172,6 @@ function ProductDetails() {
       ];
     }
 
-    // Legacy: flat fields
     if (p.giftName) {
       return [
         {
@@ -209,13 +234,13 @@ function ProductDetails() {
       try {
         setLoading(true);
         setError("");
-        const response = await axios.get(`http://localhost:5000/api/products/${id}`);
+        const response = await axios.get(`${API_BASE}/api/products/${id}`);
         setProduct(response.data);
         setQuantity(1);
         setSelectedColor(response.data.colors?.[0] || "Default");
 
-        const relatedRes = await axios.get("http://localhost:5000/api/products");
-        const filtered = relatedRes.data
+        const relatedRes = await axios.get(`${API_BASE}/api/products`);
+        const filtered = (Array.isArray(relatedRes.data) ? relatedRes.data : [])
           .filter((p: any) => p.category === response.data.category && p._id !== id)
           .slice(0, 12);
         setRelatedProducts(filtered);
@@ -243,12 +268,12 @@ function ProductDetails() {
     try {
       setSubmitting(true);
       const user = JSON.parse(localStorage.getItem("user") || "{}");
-      await axios.post(`http://localhost:5000/api/products/${id}/reviews`, {
+      await axios.post(`${API_BASE}/api/products/${id}/reviews`, {
         ...review,
         name: user.name || "Customer",
       });
       alert("✅ Review Submitted Successfully");
-      const response = await axios.get(`http://localhost:5000/api/products/${id}`);
+      const response = await axios.get(`${API_BASE}/api/products/${id}`);
       setProduct(response.data);
       setReview({ rating: 5, comment: "" });
     } catch (error) {
@@ -365,6 +390,7 @@ function ProductDetails() {
   const sellerName = getSellerName(product);
   const freeGifts = getFreeGifts(product);
   const hasGifts = freeGifts.length > 0;
+  const subcategory = getSubcategory(product);
 
   return (
     <div className="bg-slate-50 min-h-screen py-8 px-4 md:px-6">
@@ -382,20 +408,17 @@ function ProductDetails() {
             <div className="grid md:grid-cols-2 gap-8">
               {/* Image + Free Gifts */}
               <div className="space-y-4">
-                {/* Main Product Image */}
                 <div className="relative group">
                   <div className="bg-white rounded-2xl shadow-sm p-3 overflow-hidden border border-slate-100">
-                    {product.image ? (
-                      <img
-                        src={`http://localhost:5000${product.image}`}
-                        alt={product.name}
-                        className="w-full h-64 sm:h-72 md:h-80 object-cover rounded-xl transition-transform duration-500 group-hover:scale-105"
-                      />
-                    ) : (
-                      <div className="h-64 sm:h-72 md:h-80 bg-gray-100 rounded-xl flex items-center justify-center text-6xl">
-                        📦
-                      </div>
-                    )}
+                    <img
+                      src={getImageUrl(product.image)}
+                      alt={product.name}
+                      className="w-full h-64 sm:h-72 md:h-80 object-cover rounded-xl transition-transform duration-500 group-hover:scale-105"
+                      onError={(e) => {
+                        e.currentTarget.src =
+                          "https://via.placeholder.com/400x300?text=No+Image";
+                      }}
+                    />
 
                     <div className="absolute top-5 left-5 flex flex-col gap-1.5">
                       {onFlash && (
@@ -422,7 +445,6 @@ function ProductDetails() {
                   </div>
                 </div>
 
-                {/* Free Gifts Cards */}
                 {hasGifts && (
                   <div className="space-y-3">
                     {freeGifts.map((gift, index) => (
@@ -445,17 +467,15 @@ function ProductDetails() {
                         </div>
 
                         <div className="flex gap-3 items-start">
-                          {gift.image ? (
-                            <img
-                              src={`http://localhost:5000${gift.image}`}
-                              alt={gift.name}
-                              className="w-20 h-20 object-cover rounded-xl border border-purple-200 flex-shrink-0"
-                            />
-                          ) : (
-                            <div className="w-20 h-20 bg-purple-100 rounded-xl flex items-center justify-center text-2xl flex-shrink-0">
-                              🎁
-                            </div>
-                          )}
+                          <img
+                            src={getImageUrl(gift.image)}
+                            alt={gift.name}
+                            className="w-20 h-20 object-cover rounded-xl border border-purple-200 flex-shrink-0"
+                            onError={(e) => {
+                              e.currentTarget.src =
+                                "https://via.placeholder.com/80?text=🎁";
+                            }}
+                          />
                           <div className="min-w-0">
                             <h4 className="font-semibold text-slate-900 text-sm leading-snug">
                               {gift.name}
@@ -479,10 +499,17 @@ function ProductDetails() {
               {/* Info */}
               <div className="space-y-5">
                 <div>
-                  <span className="inline-block bg-orange-100 text-orange-600 text-[11px] font-semibold px-3 py-1 rounded-full">
-                    {product.category}
-                    {product.subCategory ? ` • ${product.subCategory}` : ""}
-                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="inline-block bg-orange-100 text-orange-600 text-[11px] font-semibold px-3 py-1 rounded-full">
+                      {product.category || "Uncategorized"}
+                    </span>
+                    {subcategory && (
+                      <span className="inline-block bg-slate-100 text-slate-600 text-[11px] font-semibold px-3 py-1 rounded-full">
+                        {subcategory}
+                      </span>
+                    )}
+                  </div>
+
                   <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mt-2.5 leading-tight">
                     {product.name}
                   </h1>
@@ -498,7 +525,6 @@ function ProductDetails() {
                   )}
                 </div>
 
-                {/* Price + Countdown */}
                 {onFlash ? (
                   <div className="space-y-3">
                     <div>
@@ -539,7 +565,6 @@ function ProductDetails() {
                   </div>
                 )}
 
-                {/* Free Gifts highlight (mobile) */}
                 {hasGifts && (
                   <div className="md:hidden space-y-2">
                     {freeGifts.map((gift, index) => (
@@ -588,7 +613,6 @@ function ProductDetails() {
                   {product.description}
                 </p>
 
-                {/* Quantity */}
                 <div className="border border-slate-200 rounded-xl p-4">
                   <p className="font-medium text-sm mb-2.5">Quantity</p>
                   <div className="flex items-center gap-3">
@@ -611,7 +635,6 @@ function ProductDetails() {
                   </div>
                 </div>
 
-                {/* Colors */}
                 <div className="border border-slate-200 rounded-xl p-4">
                   <p className="font-medium text-sm mb-2.5">Available Colors</p>
                   <div className="flex flex-wrap gap-2">
@@ -633,7 +656,6 @@ function ProductDetails() {
                   </div>
                 </div>
 
-                {/* Actions */}
                 <div className="flex flex-col gap-3">
                   <button
                     onClick={addToCart}
@@ -796,7 +818,6 @@ function ProductDetails() {
                 </div>
               )}
 
-              {/* Free Gifts in Sidebar */}
               {hasGifts && (
                 <div className="mb-5 space-y-3">
                   {freeGifts.map((gift, index) => (
@@ -826,7 +847,7 @@ function ProductDetails() {
                 {categories.map((cat, index) => (
                   <Link
                     key={index}
-                    to={`/category/${cat.name}`}
+                    to={`/category/${encodeURIComponent(cat.name)}`}
                     className="bg-slate-50 hover:bg-orange-50 p-3.5 rounded-xl text-center transition flex flex-col items-center"
                   >
                     <span className="text-2xl mb-1.5">{cat.icon}</span>
@@ -874,15 +895,15 @@ function ProductDetails() {
                   className="bg-white rounded-xl shadow-sm hover:shadow-md transition overflow-hidden block group border border-slate-100"
                 >
                   <div className="h-28 sm:h-32 bg-gray-50 overflow-hidden relative">
-                    {p.image ? (
-                      <img
-                        src={`http://localhost:5000${p.image}`}
-                        alt={p.name}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div className="h-full flex items-center justify-center text-4xl">📦</div>
-                    )}
+                    <img
+                      src={getImageUrl(p.image)}
+                      alt={p.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        e.currentTarget.src =
+                          "https://via.placeholder.com/200x150?text=No+Image";
+                      }}
+                    />
                     {relatedGifts.length > 0 && (
                       <div className="absolute top-1.5 left-1.5 bg-purple-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
                         🎁 {relatedGifts.length > 1 ? `${relatedGifts.length} GIFTS` : "GIFT"}
@@ -894,7 +915,7 @@ function ProductDetails() {
                       {p.name}
                     </h3>
                     <p className="text-orange-600 font-bold mt-1 text-sm">
-                      KSh {p.price.toLocaleString()}
+                      KSh {Number(p.price).toLocaleString()}
                     </p>
                   </div>
                 </Link>

@@ -4,22 +4,73 @@ const User = require("../models/User");
 const Order = require("../models/Order");
 const { protect } = require("../middleware/authMiddleware");
 
+// ====================== TEMP DEBUG (remove later) ======================
+router.get("/users-count-test", async (req, res) => {
+  try {
+    const total = await User.countDocuments();
+    const sellers = await User.countDocuments({
+      role: { $in: ["seller", "vendor", "Seller", "Vendor"] },
+    });
+    const buyers = await User.countDocuments({
+      role: { $in: ["buyer", "Buyer"] },
+    });
+    const sample = await User.find().select("name email role").limit(15);
+
+    res.json({
+      success: true,
+      total,
+      sellers,
+      buyers,
+      sample,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // ====================== ADMIN DASHBOARD STATS ======================
 router.get("/dashboard", protect, async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
+
     const activeSellers = await User.countDocuments({
-      role: { $in: ["seller", "vendor"] },
+      role: { $in: ["seller", "vendor", "Seller", "Vendor"] },
     });
-    const totalRevenueResult = await Order.aggregate([
-      { $group: { _id: null, total: { $sum: "$amount" } } },
-    ]);
-    const pendingOrders = await Order.countDocuments({ status: "Pending" });
+
+    const activeBuyers = await User.countDocuments({
+      role: { $in: ["buyer", "Buyer"] },
+    });
+
+    let totalRevenue = 0;
+    try {
+      const totalRevenueResult = await Order.aggregate([
+        {
+          $group: {
+            _id: null,
+            total: { $sum: { $ifNull: ["$total", { $ifNull: ["$amount", 0] }] } },
+          },
+        },
+      ]);
+      totalRevenue = totalRevenueResult[0]?.total || 0;
+    } catch (e) {
+      console.log("Order aggregate skipped:", e.message);
+    }
+
+    let pendingOrders = 0;
+    try {
+      pendingOrders = await Order.countDocuments({
+        status: { $in: ["Pending", "pending"] },
+      });
+    } catch (e) {
+      console.log("Pending orders count skipped:", e.message);
+    }
 
     res.json({
+      success: true,
       totalUsers,
       activeSellers,
-      totalRevenue: totalRevenueResult[0]?.total || 0,
+      activeBuyers,
+      totalRevenue,
       pendingOrders,
     });
   } catch (error) {
@@ -28,11 +79,22 @@ router.get("/dashboard", protect, async (req, res) => {
   }
 });
 
-// ====================== PENDING SELLERS (with documents) ======================
+// ====================== ALL USERS ======================
+router.get("/users", protect, async (req, res) => {
+  try {
+    const users = await User.find().select("-password").sort({ createdAt: -1 });
+    res.json(users);
+  } catch (error) {
+    console.error("Get users error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// ====================== PENDING SELLERS ======================
 router.get("/sellers/pending", protect, async (req, res) => {
   try {
     const sellers = await User.find({
-      role: { $in: ["seller", "vendor"] },
+      role: { $in: ["seller", "vendor", "Seller", "Vendor"] },
       verificationStatus: "pending",
     }).select("-password");
 
@@ -47,7 +109,7 @@ router.get("/sellers/pending", protect, async (req, res) => {
 router.get("/sellers", protect, async (req, res) => {
   try {
     const sellers = await User.find({
-      role: { $in: ["seller", "vendor"] },
+      role: { $in: ["seller", "vendor", "Seller", "Vendor"] },
     }).select("-password");
 
     res.json(sellers);
@@ -57,7 +119,7 @@ router.get("/sellers", protect, async (req, res) => {
   }
 });
 
-// ====================== SINGLE SELLER (with documents) ======================
+// ====================== SINGLE SELLER ======================
 router.get("/sellers/:id", protect, async (req, res) => {
   try {
     const seller = await User.findById(req.params.id).select("-password");

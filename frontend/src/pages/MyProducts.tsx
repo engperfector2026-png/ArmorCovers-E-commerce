@@ -8,6 +8,7 @@ interface Product {
   name: string;
   description: string;
   category: string;
+  subcategory?: string;
   price: number;
   stock: number;
   image?: string;
@@ -111,6 +112,18 @@ function MyProducts() {
     }
   };
 
+  // Helper: format category + subcategory for display
+  const formatCategory = (product: Product) => {
+    const cat = product.category || "";
+    const sub =
+      product.subcategory && product.subcategory !== "All"
+        ? product.subcategory
+        : "";
+
+    if (cat && sub) return `${cat} › ${sub}`;
+    return cat || "Uncategorized";
+  };
+
   return (
     <div className="bg-slate-100 min-h-screen py-10 px-6">
       <div className="max-w-7xl mx-auto">
@@ -194,9 +207,18 @@ function MyProducts() {
                 </div>
 
                 <div className="p-6">
-                  <span className="inline-block bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-xs font-medium mb-3">
-                    {product.category}
-                  </span>
+                  {/* Category + Subcategory (matches EditProduct / Shop format) */}
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    <span className="inline-block bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-xs font-medium">
+                      {product.category || "Uncategorized"}
+                    </span>
+                    {product.subcategory &&
+                      product.subcategory !== "All" && (
+                        <span className="inline-block bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-medium">
+                          {product.subcategory}
+                        </span>
+                      )}
+                  </div>
 
                   <h3 className="font-bold text-xl text-gray-900 line-clamp-2">
                     {product.name}

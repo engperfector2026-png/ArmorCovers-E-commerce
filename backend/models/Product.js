@@ -2,11 +2,13 @@ const mongoose = require("mongoose");
 
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  description: String,
-  category: String,
-  subcategory: String,
+  description: { type: String, default: "" },
+
+  category: { type: String, default: "General" },
+  subcategory: { type: String, default: "" },
+
   price: { type: Number, required: true },
-  wholesalePrice: Number,
+  wholesalePrice: { type: Number },
   stock: { type: Number, default: 1 },
   minimumOrder: { type: Number, default: 1 },
   type: {
@@ -14,10 +16,10 @@ const productSchema = new mongoose.Schema({
     enum: ["retail", "wholesale", "both", "warehouse"],
     default: "retail",
   },
-  image: String,
+  image: { type: String, default: "" },
   seller: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 
-  // ====================== FLASH SALE FIELDS ======================
+  // ====================== FLASH SALE ======================
   isFlashSale: {
     type: Boolean,
     default: false,
@@ -34,9 +36,8 @@ const productSchema = new mongoose.Schema({
   flashSaleStock: {
     type: Number,
   },
-  // ==============================================================
 
-  // ====================== WARRANTY FIELDS ======================
+  // ====================== WARRANTY ======================
   warranty: {
     type: Boolean,
     default: false,
@@ -45,14 +46,12 @@ const productSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-  // ==============================================================
 
-  // ====================== FREE GIFT FIELDS ======================
+  // ====================== FREE GIFTS ======================
   hasFreeGift: {
     type: Boolean,
     default: false,
   },
-  // New: multiple free gifts
   gifts: [
     {
       name: { type: String, required: true },
@@ -60,17 +59,10 @@ const productSchema = new mongoose.Schema({
       image: { type: String, default: "" },
     },
   ],
-  // Legacy single-gift fields (kept for backward compatibility)
-  giftName: {
-    type: String,
-  },
-  giftDescription: {
-    type: String,
-  },
-  giftImage: {
-    type: String,
-  },
-  // ==============================================================
+  // Legacy single-gift fields
+  giftName: { type: String },
+  giftDescription: { type: String },
+  giftImage: { type: String },
 
   reviews: [
     {

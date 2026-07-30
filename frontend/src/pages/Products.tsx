@@ -47,7 +47,6 @@ interface Product {
   flashSaleStock?: number;
   warranty?: boolean | number | string;
   warrantyMonths?: number;
-  // Free Gift (new + legacy)
   hasFreeGift?: boolean;
   gifts?: FreeGift[];
   giftName?: string;
@@ -225,7 +224,16 @@ function Shop() {
     const fetchProducts = async () => {
       try {
         const response = await axios.get("http://localhost:5000/api/products");
-        setProducts(Array.isArray(response.data) ? response.data : []);
+        const data = Array.isArray(response.data) ? response.data : [];
+        setProducts(data);
+        console.log(
+          "📦 Products with categories:",
+          data.map((p: Product) => ({
+            name: p.name,
+            category: p.category,
+            subcategory: p.subcategory,
+          }))
+        );
       } catch (error) {
         console.error("Error fetching products:", error);
         setProducts([]);
@@ -236,7 +244,6 @@ function Shop() {
     fetchProducts();
   }, []);
 
-  // Close contact menu when clicking outside
   useEffect(() => {
     const close = () => setContactMenuId(null);
     if (contactMenuId) {
@@ -244,6 +251,8 @@ function Shop() {
       return () => window.removeEventListener("click", close);
     }
   }, [contactMenuId]);
+
+  const norm = (s?: string) => String(s || "").trim().toLowerCase();
 
   const isOnFlashSale = (product: Product) => {
     if (!product.isFlashSale || !product.flashSalePrice) return false;
@@ -270,11 +279,9 @@ function Shop() {
     return "12 Months";
   };
 
-  // Supports new gifts[] array + legacy single gift fields
   const getFreeGifts = (product: Product): FreeGift[] => {
     if (product.hasFreeGift === false) return [];
 
-    // New format: gifts array
     if (Array.isArray(product.gifts) && product.gifts.length > 0) {
       return product.gifts
         .filter((g) => g && g.name && String(g.name).trim())
@@ -285,7 +292,6 @@ function Shop() {
         }));
     }
 
-    // Legacy: nested gift object
     if (product.gift?.name) {
       return [
         {
@@ -296,7 +302,6 @@ function Shop() {
       ];
     }
 
-    // Legacy: flat fields
     if (product.giftName) {
       return [
         {
@@ -310,9 +315,7 @@ function Shop() {
     return [];
   };
 
-  const hasFreeGift = (product: Product) => {
-    return getFreeGifts(product).length > 0;
-  };
+  const hasFreeGift = (product: Product) => getFreeGifts(product).length > 0;
 
   const getGiftLabel = (product: Product) => {
     const gifts = getFreeGifts(product);
@@ -414,23 +417,30 @@ function Shop() {
     );
   };
 
+  // ===== FILTER: main category + subcategory =====
   const filteredProducts = products.filter((product) => {
+    const q = searchTerm.trim().toLowerCase();
     const matchesSearch =
-      searchTerm === "" ||
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.description &&
-        product.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (product.category &&
-        product.category.toLowerCase().includes(searchTerm.toLowerCase()));
+      q === "" ||
+      product.name.toLowerCase().includes(q) ||
+      (product.description && product.description.toLowerCase().includes(q)) ||
+      (product.category && product.category.toLowerCase().includes(q)) ||
+      (product.subcategory && product.subcategory.toLowerCase().includes(q));
 
     if (!matchesSearch) return false;
+
     if (!selectedMainCategory) return true;
-    if (product.category !== selectedMainCategory) return false;
+
+    // Match main category (tolerant)
+    if (norm(product.category) !== norm(selectedMainCategory)) return false;
+
+    // "All" under this main category
     if (selectedSubCategory === "All") return true;
-    return product.subcategory === selectedSubCategory;
+
+    // Match subcategory (tolerant)
+    return norm(product.subcategory) === norm(selectedSubCategory);
   });
 
-  // Sort: Flash sales first, then free-gift products, then the rest
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     const aFlash = isOnFlashSale(a) ? 2 : 0;
     const bFlash = isOnFlashSale(b) ? 2 : 0;
@@ -440,6 +450,16 @@ function Shop() {
   });
 
   const currentMain = mainCategories.find((cat) => cat.name === selectedMainCategory);
+
+  // Count products per subcategory for the selected main category
+  const subCategoryCounts = (subValue: string) => {
+    if (!selectedMainCategory) return 0;
+    return products.filter((p) => {
+      if (norm(p.category) !== norm(selectedMainCategory)) return false;
+      if (subValue === "All") return true;
+      return norm(p.subcategory) === norm(subValue);
+    }).length;
+  };
 
   if (loading) {
     return (
@@ -452,7 +472,6 @@ function Shop() {
   return (
     <div className="bg-gradient-to-br from-slate-50 via-white to-slate-50 min-h-screen py-8 md:py-12 px-4 md:px-6">
       <div className="max-w-7xl mx-auto">
-        {/* Hero */}
         <div className="text-center mb-10 md:mb-16">
           <h1 className="text-4xl md:text-6xl font-bold mb-3 tracking-tight bg-gradient-to-r from-slate-900 via-orange-600 to-slate-900 bg-clip-text text-transparent">
             ArmorCovers Shop
@@ -522,6 +541,7 @@ function Shop() {
                   }`}
                 >
                   {sub.name}
+                  <span className="ml-1 opacity-70">({subCategoryCounts(sub.value)})</span>
                 </button>
               ))}
             </div>
@@ -546,6 +566,19 @@ function Shop() {
               </div>
 
               <div className="space-y-1.5">
+                <button
+                  onClick={() => {
+                    setSelectedMainCategory(null);
+                    setSelectedSubCategory("All");
+                  }}
+                  className={`w-full text-left px-5 py-3.5 rounded-2xl font-medium transition-all text-sm ${
+                    !selectedMainCategory
+                      ? "bg-orange-500 text-white"
+                      : "hover:bg-gray-100"
+                  }`}
+                >
+                  All Products
+                </button>
                 {mainCategories.map((category) => (
                   <button
                     key={category.name}
@@ -584,6 +617,10 @@ function Shop() {
                   <h3 className="text-2xl font-bold text-gray-800">
                     {selectedMainCategory}
                   </h3>
+                  <span className="text-sm text-gray-400">
+                    {filteredProducts.length} product
+                    {filteredProducts.length !== 1 ? "s" : ""}
+                  </span>
                 </div>
 
                 <div className="flex gap-2.5 flex-wrap">
@@ -598,13 +635,15 @@ function Shop() {
                       }`}
                     >
                       {sub.name}
+                      <span className="ml-1.5 opacity-80">
+                        ({subCategoryCounts(sub.value)})
+                      </span>
                     </button>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* ========== COMPACT PRODUCT GRID ========== */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
               {sortedProducts.length > 0 ? (
                 sortedProducts.map((product) => {
@@ -665,6 +704,13 @@ function Shop() {
                             {product.name}
                           </h3>
 
+                          {/* Subcategory badge */}
+                          {product.subcategory && (
+                            <span className="inline-block self-start text-[10px] font-medium text-orange-600 bg-orange-50 border border-orange-100 px-2 py-0.5 rounded-full mb-1 max-w-full truncate">
+                              {product.subcategory}
+                            </span>
+                          )}
+
                           {typeof product.seller === "object" && product.seller?.name && (
                             <p className="text-[10px] text-slate-400 mb-1">
                               by {product.seller.name}
@@ -697,7 +743,6 @@ function Shop() {
                         </div>
                       </Link>
 
-                      {/* Icon Actions */}
                       <div className="px-3 pb-3 pt-0 flex items-center justify-between gap-1.5 border-t border-gray-50 mt-1">
                         <Link
                           to="/"
@@ -779,9 +824,9 @@ function Shop() {
               ) : (
                 <div className="col-span-full text-center py-16 sm:py-20">
                   <p className="text-gray-500 text-lg sm:text-xl">No products found</p>
-                  {searchTerm && (
+                  {(searchTerm || selectedMainCategory) && (
                     <p className="text-gray-400 mt-2 text-sm">
-                      Try a different search term
+                      Try another category, subcategory, or search term
                     </p>
                   )}
                 </div>

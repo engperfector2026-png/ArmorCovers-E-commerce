@@ -10,13 +10,14 @@ const createProduct = async (req, res) => {
       price,
       description,
       category,
+      subcategory,
       stock,
       wholesalePrice,
       minimumOrder,
       type,
       seller,
       hasFreeGift,
-      gifts: giftsRaw, // JSON string from frontend
+      gifts: giftsRaw,
     } = req.body;
 
     if (!name || !price) {
@@ -71,7 +72,7 @@ const createProduct = async (req, res) => {
       }
     }
 
-    // Fallback: if no gifts array but legacy single gift fields exist
+    // Fallback: legacy single gift fields
     if (freeGiftEnabled && gifts.length === 0 && req.body.giftName) {
       const singleImage =
         giftImageFiles[0] || req.files?.giftImage?.[0];
@@ -88,7 +89,6 @@ const createProduct = async (req, res) => {
       ];
     }
 
-    // Always ensure gifts is an array
     if (!Array.isArray(gifts)) {
       gifts = [];
     }
@@ -98,6 +98,7 @@ const createProduct = async (req, res) => {
       price: parseFloat(price),
       description: description ? description.trim() : "",
       category: category || "General",
+      subcategory: subcategory ? String(subcategory).trim() : "",
       stock: parseInt(stock) || 1,
       wholesalePrice: wholesalePrice ? parseFloat(wholesalePrice) : null,
       minimumOrder: parseInt(minimumOrder) || 1,
@@ -112,17 +113,23 @@ const createProduct = async (req, res) => {
       warranty: false,
       warrantyMonths: 0,
       reviews: [],
-
-      // Multiple free gifts
       hasFreeGift: freeGiftEnabled && gifts.length > 0,
       gifts: gifts,
     });
 
     const savedProduct = await product.save();
 
-    console.log("✅ Product created:", savedProduct._id, "| Seller:", sellerId);
+    console.log(
+      "✅ Product created:",
+      savedProduct._id,
+      "| Category:",
+      savedProduct.category,
+      "| Subcategory:",
+      savedProduct.subcategory,
+      "| Seller:",
+      sellerId
+    );
 
-    // Safe check before calling .map()
     if (
       savedProduct.hasFreeGift &&
       Array.isArray(savedProduct.gifts) &&
@@ -218,6 +225,10 @@ const updateProduct = async (req, res) => {
       updateData.image = `/uploads/${imageFile.filename}`;
     }
 
+    if (updateData.subcategory !== undefined) {
+      updateData.subcategory = String(updateData.subcategory || "").trim();
+    }
+
     if (updateData.price !== undefined) {
       updateData.price = parseFloat(updateData.price);
     }
@@ -240,7 +251,6 @@ const updateProduct = async (req, res) => {
       updateData.warrantyMonths = parseInt(updateData.warrantyMonths);
     }
 
-    // Multiple free gifts
     if (updateData.hasFreeGift !== undefined) {
       const freeGiftEnabled =
         updateData.hasFreeGift === true || updateData.hasFreeGift === "true";
@@ -280,7 +290,6 @@ const updateProduct = async (req, res) => {
       }
     }
 
-    // Always ensure gifts is an array if present
     if (updateData.gifts !== undefined && !Array.isArray(updateData.gifts)) {
       updateData.gifts = [];
     }
